@@ -1,0 +1,89 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito&display=swap');
+
+span, p, a {
+    font-family: 'Nunito', sans-serif;
+}
+
+h1 {
+    font-family: 'Nunito', sans-serif;
+    font-size: 5vw;
+    text-align: center;
+}
+h2 {
+    font-family: 'Nunito', sans-serif;
+    font-size: 1.5vw;
+    text-align: center;
+    color:rgb(80, 80, 80);
+}
+
+h5 {
+    font-family: 'Nunito', sans-serif;
+}
+
+h6 {
+    font-family: 'Nunito', sans-serif;
+}
+
+#analytics-title {
+    text-align: center;
+    font-size: 1.5vw;
+}
+
+#analytics-subtitle {
+    text-align: center;
+    font-size: 1vw;
+}
+/*
+#nav {
+    display: flex;
+    justify-content: center;
+}
+*/
+
+#piano {
+    min-height: 5em;
+    min-width: 5em;
+    display: flex;
+    border: 2px solid black;
+}
+
+.key {
+    min-height: 5em;
+    min-width: 1em;
+    background-color: rgb(191, 232, 255);
+    border: solid 2px black;
+    border-radius: 0.25em;
+}
+
+.graph-container {
+    width: 500px;
+    height: 250px;
+    /*margin-left: calc(50vw - 250px);*/
+    margin-bottom: 400px;
+}
+
+.row {
+    margin: 0;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+.nav-item {
+    text-decoration: none;
+}
+/*
+.button-row {
+    display: flex;
+}
+*/
+/*
+#button-container {
+    padding-left: 25%;
+    display: flex;
+}
+*/
+#graph-wrapper {
+    display: flex;
+    justify-content: center;
+}
