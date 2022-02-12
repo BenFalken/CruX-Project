@@ -12,7 +12,7 @@ from scipy import signal
 
 # Initialize Firestore DB
 
-cred = credentials.Certificate('/Users/benfalken/Desktop/myproject/arasi-3c613-firebase-adminsdk-i534z-e88b914885.json')
+cred = credentials.Certificate('certificate.json')
 default_app = initialize_app(cred)
 db = firestore.client()
 open_recordings = db.collection('open_recordings')
@@ -64,7 +64,7 @@ def filter_data(data):
 # Since we don't yet have the openbci headset, this data comes from a file which will be attached in the repo
 def collect_edf_data():
     global all_data
-    raw_data = mne.io.read_raw_edf("/Users/benfalken/Desktop/BoxMove/files/S001/S001R01.edf")
+    raw_data = mne.io.read_raw_edf("S001R01.edf")
     all_data = raw_data.get_data()[0].tolist()[:1000]
 
 # Get all the data in a certain time window
