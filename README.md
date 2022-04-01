@@ -9,7 +9,9 @@ The steps for installation go as follows:
 CREATE AN ENVIRONMENT
 
 $ mkdir myproject
+
 $ cd myproject
+
 $ python3 -m venv venv
 
 ACTIVATE THE ENVIRONMENT
@@ -19,14 +21,17 @@ $ . venv/bin/activate
 NOW, INSTALL FLASK AND THE SOCKET IN THE ENVIRONMENT YOU HAVE CREATED AND ACTIVATED
 
 $ pip install Flask
+
 $ pip install flask-socketio
 
 YOU MAY ALSO NEED TO INSTALL THE FOLLOWING PACKAGES
 
 $ pip install numpy
+
 $ pip install scipy
 
 $ pip install firebase
+
 $ pip install firebase_admin
 
 $ pip install mne
