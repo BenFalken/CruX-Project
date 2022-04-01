@@ -77,13 +77,90 @@ h6 {
     display: flex;
 }
 */
-/*
 #button-container {
-    padding-left: 25%;
-    display: flex;
+    margin-left: 25%;
+    min-width: 50%;
+    max-width: 50%;
 }
-*/
 #graph-wrapper {
     display: flex;
     justify-content: center;
 }
+
+/* CSS */
+.button-1 {
+  background-color: #EA4C89;
+  border-radius: 8px;
+  border-style: none;
+  box-sizing: border-box;
+  color: #FFFFFF;
+  cursor: pointer;
+  display: inline-block;
+  font-family: "Haas Grot Text R Web", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  height: 40px;
+  line-height: 20px;
+  list-style: none;
+  margin: 0;
+  outline: none;
+  padding: 10px 16px;
+  position: relative;
+
+  /*left: 30%;*/
+
+  text-align: center;
+  text-decoration: none;
+  transition: color 100ms;
+  vertical-align: baseline;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+
+  min-width: 20%;
+  max-width: 20%;
+  
+  margin-top: 1%;
+  margin-bottom: 1%;
+
+}
+
+.button-1.left {
+    left: 25%;
+}
+
+.button-1.right {
+    left: 35%;
+}
+/*#F082AC;*/
+/*
+.button-1:hover,
+.button-1:focus {
+  background-color: skyblue; 
+}
+
+.button-1:active {
+    background-color: skyblue;
+}
+
+#open-button:hover,
+#open-button:focus {
+  background-color: skyblue;
+}
+
+#open-button:active {
+    background-color: skyblue;
+}
+*/
+
+.nav-item {
+    padding-left: 10%;
+}
+
+/*
+@media (min-width: 1000px) {
+    .graph-container {
+        margin-left: calc(550px - )
+    }
+}
+*/

@@ -18,7 +18,7 @@ $(document).ready(function(){
             labels: [],
             datasets: [{
                 label: 'EEG Data',
-                data: []
+                data: [0, 0]
             }]
         },
         options: {
@@ -48,7 +48,7 @@ $(document).ready(function(){
         data: {
             labels: ['Eyes Open', 'Eyes Closed'],
             datasets: [{
-                data: [10, 10]
+                data: [0, 0]
         }]},
         options: {
             plugins: {
@@ -56,8 +56,12 @@ $(document).ready(function(){
                     display: false
                 }
             },
+            animation: {
+                duration: 0
+            },
             scales: {
             y: {
+                display: false,
                 beginAtZero: true
             }
             }
@@ -86,10 +90,21 @@ $(document).ready(function(){
           chart.update();
       }
 
+      function addDataToBar(chart, data) {
+        chart.data.datasets.forEach((dataset) => {
+            dataset.data.shift();
+            dataset.data.push(data);
+        });
+        chart.update();
+      }
+
     let i = 0;
     //receive details from server
-    socket.on('newnumber', function(msg) {
+    socket.on('new_data', function(msg) {
+        console.log("RECIEVED DATA");
         $("#file-count").text(msg.open_file_count.toString() + " " + msg.closed_file_count.toString());
+        addDataToBar(fileCountChart, msg.open_file_count);
+        addDataToBar(fileCountChart, msg.closed_file_count);
         if (is_ready) {
             let WINDOW_SIZE = msg.window_size;
             for (var j = 0; j < msg.data.length; j++) {
@@ -111,6 +126,12 @@ $(document).ready(function(){
 function start_recording_open() {
     console.log("RECORDING OPEN")
     is_ready = true;
+    var color =  $("#open-button").css("background-color");
+    if (color != 'skyblue') {
+        $("#open-button").css("background-color", 'skyblue');
+    } else { //EA4C89
+        $("#open-button").css("background-color", '#EA4C89');
+    }
     $.getJSON('/start_recording_open',
         function(data) {
             //do nothing
@@ -135,4 +156,5 @@ function create_network() {
 
 function stop_recording() {
     is_ready = false;
+    $("#open-button").css("background-color", '#ea4c89');
 }
