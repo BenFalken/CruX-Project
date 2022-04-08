@@ -5,3 +5,4 @@ scipy
 firebase
 firebase_admin
 mne
+tensorflow

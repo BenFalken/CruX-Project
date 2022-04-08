@@ -1,2 +1,6 @@
 firebase_key.json
 __pycache__/*
+mne
+np
+pkl
+tf

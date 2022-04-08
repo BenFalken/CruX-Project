@@ -1,4 +1,4 @@
-# IMPORT SOME SHIT
+#!/usr/bin/env python3
 
 from flask_socketio import SocketIO, emit
 from flask import Flask, render_template, url_for, copy_current_request_context
@@ -20,9 +20,9 @@ import mne
 
 # Firebase
 
-cred = credentials.Certificate('arasi-3c613-firebase-adminsdk-i534z-e88b914885.json')
+cred = credentials.Certificate('firebase_key.json')
 
-#cred = credentials.Certificate('/Users/benfalken/Desktop/myproject/arasi-8918d-firebase-adminsdk-fbfvx-a44bc4d7df.json')
+#cred = credentials.Certificate('firebase_key.json')
 
 default_app = initialize_app(cred, options={
       'storageBucket': 'nam5',
