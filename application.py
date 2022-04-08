@@ -15,7 +15,7 @@ from scipy import signal
 ## INITIALIZE SOME SHIT ##
 
 # Firebase
-cred = credentials.Certificate('/Users/benfalken/Desktop/myproject/arasi-3c613-firebase-adminsdk-i534z-e88b914885.json')
+cred = credentials.Certificate('firebase_key.json')
 default_app = initialize_app(cred)
 db = firestore.client()
 open_recordings = db.collection('open_recordings')
