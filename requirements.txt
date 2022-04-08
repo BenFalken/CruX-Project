@@ -1,0 +1,7 @@
+Flask
+flask-socketio
+numpy
+scipy
+firebase
+firebase_admin
+mne
