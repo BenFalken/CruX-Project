@@ -25,6 +25,6 @@ NOW, INSTALL FLASK AND THE SOCKET IN THE ENVIRONMENT YOU HAVE CREATED AND ACTIVA
 Ask for the firebase certificate and it will be provided.
 To run, you must install all required packages using python 3. To run, enter the command:
 
-$ export FLASK_APP=application
+'$ export FLASK_APP=application'
 
-$ flask run
+'$ flask run'
