@@ -20,9 +20,7 @@ import mne
 
 # Firebase
 
-cred = credentials.Certificate('arasi-3c613-firebase-adminsdk-i534z-e88b914885.json')
-
-#cred = credentials.Certificate('/Users/benfalken/Desktop/myproject/arasi-8918d-firebase-adminsdk-fbfvx-a44bc4d7df.json')
+cred = credentials.Certificate('firebase_key.json')
 
 default_app = initialize_app(cred, options={
       'storageBucket': 'nam5',
