@@ -22,8 +22,6 @@ import mne
 
 cred = credentials.Certificate('firebase_key.json')
 
-#cred = credentials.Certificate('firebase_key.json')
-
 default_app = initialize_app(cred, options={
       'storageBucket': 'nam5',
   })
