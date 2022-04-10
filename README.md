@@ -6,7 +6,7 @@ Users' information is stored in firebase, and is fetched as the need arises. Thr
 
 ## Installation steps
 
-CREATE AN ENVIRONMENT
+Create a python environment
 
 `$ mkdir myproject`
 
@@ -14,16 +14,16 @@ CREATE AN ENVIRONMENT
 
 `$ python3 -m venv venv`
 
-ACTIVATE THE ENVIRONMENT
+Activate the python environment
 
 `$ . venv/bin/activate`
 
-NOW, INSTALL FLASK AND THE SOCKET IN THE ENVIRONMENT YOU HAVE CREATED AND ACTIVATED
+Now, install all required packages
 
 `$ pip install -r requirements.txt`
 
-Ask for the firebase certificate and it will be provided.
-To run, you must install all required packages using python 3. To run, enter the command:
+Email to the firebase_key.json certificate and it will be provided.
+To run, enter the command:
 
 `$ export FLASK_APP=application`
 
