@@ -21,12 +21,14 @@
         
         <!-- JavaScript Bundle with Popper -->
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+        
         <!-- Code responsible for loading headers and footers -->
         <script>
             $(document).ready(function() {
                 $('#navbar').load('navbar');
             });
         </script>
+
         <script>
           $(document).ready(function() {
               $('#footer').load('footer');
@@ -34,9 +36,14 @@
         </script>
     </head>
     <body>
+        <!--Le navbar-->
         <div id="navbar"></div>
+
+        <!--Titles-->
         <h2>Contact the authors</h2>
         <img class="crux-logo" src="https://firebasestorage.googleapis.com/v0/b/arasi-3c613.appspot.com/o/neurons.png?alt=media&token=68c931b4-7537-42b4-9348-c9fb25fd4a44">
+        
+        <!--Description-->
         <div class="text-wrapper">
             <p>
                 This project can be found on <a href="https://github.com/BenFalken/CruX-Project">GitHub</a>.
@@ -64,6 +71,8 @@
                 For more information, please visit the <a href="https://www.cruxucla.com">CruX website</a> for more information on this and other projects!
             </p>
         </div>
+
+        <!--Le footer-->
         <div id="footer"></div>
     </body>
 </html>
