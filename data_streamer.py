@@ -8,7 +8,7 @@ class DataStreamer:
         self.open_file_count = 0
         self.closed_file_count = 0
         self.data = []           # All of le data
-        self.t = 0               # The current time, which tells us how to parse out the data into the site
+        self.current_time = 0    # The current time, which tells us how to parse out the data into the site
 
     # Since we don't yet have the openbci headset, this data comes from a file which will be attached in the repository
     def collect_edf_data(self):
@@ -17,8 +17,5 @@ class DataStreamer:
 
     # Get all the data in a certain time window
     def get_data(self):
-        self.t += DELAY
-        return self.data[self.t-DELAY: self.t]
-
-    def get_time(self):
-        return self.t
+        self.current_time += DELAY
+        return self.data[self.current_time - DELAY:self.current_time]

@@ -1,80 +1,87 @@
-# IMPORT SOME SHIT
+## Import everything ##
 
 from flask_socketio import SocketIO, emit
 from flask import Flask, render_template, url_for, copy_current_request_context
 
 from threading import Thread, Event
 
-import classifier
 from data_streamer import DataStreamer
 from firebase_communicator import FirebaseCommunicator
 from const import *
+import classifier
 
-## INITIALIZE SOME STUFF ##
+## Initialize some stuff ##
 
-# Flask
-
-__author__ = 'slynn'
-
+# Flask setup
+__author__ = 'Ben Falkenburg'
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
 app.config['DEBUG'] = True
 
-# Our threading
-
 # Turn the flask app into a socketio app
 socketio = SocketIO(app, async_mode=None, logger=True, engineio_logger=True)
 
-# Thread
+# Create thread
 thread = Thread()
 thread_stop_event = Event()
+
 # Streamer
 streamer = DataStreamer()
+
 # Firebase
 firebase_comm = FirebaseCommunicator()
 
+## Functions that facilitate data streaming and database interaction ##
 
-# Our website's bread and butter
-def eeg_processor():
+# If we have enough data to chunk out and add to our database, let's do so
+def add_data_streamed_at_current_time():
     global streamer, firebase_comm
-    # Ignore this boolea for rn. It's unecessary
-    is_resting = False
+    current_time = streamer.current_time
+    if current_time > 0 and current_time % DATA_CHUNK_SIZE == 0:
+        # We will make and store a time series of size data_chunk_size and add it to our database
+        if streamer.recording_class == "OPEN":
+            firebase_comm.add_data_to_open_recordings(streamer.open_file_count, streamer.data[current_time - DATA_CHUNK_SIZE:current_time])
+            streamer.open_file_count += 1
+        elif streamer.recording_class == "CLOSED":
+            firebase_comm.add_data_to_closed_recordings(streamer.closed_file_count, streamer.data[current_time - DATA_CHUNK_SIZE:current_time])
+            streamer.closed_file_count += 1
 
-    # Get the file counts (metadata) just because it's good to display it right off the bat
-    streamer.open_file_count = firebase_comm.get_open_file_count()
-    streamer.closed_file_count = firebase_comm.get_closed_file_count()
-
-    while not thread_stop_event.isSet():
-        # Collect eeg data
-        data_streamed_at_current_time = streamer.get_data()
-        t = streamer.get_time()
-
-        # If we have enough data to chunk and add to database, let's do so
-        if t > 0 and t%DATA_CHUNK_SIZE == 0:
-            # We will make and store a time series, adding it to our database
-            if streamer.recording_class == "OPEN":
-                firebase_comm.add_data_to_open_recordings(streamer.open_file_count, streamer.data[t-DATA_CHUNK_SIZE: t])
-                streamer.open_file_count += 1
-            elif streamer.recording_class == "CLOSED":
-                firebase_comm.add_data_to_closed_recordings(streamer.closed_file_count, streamer.data[t-DATA_CHUNK_SIZE: t])
-                streamer.closed_file_count += 1
-        # Once data stops getting produced, end the program. Also included: code to initially display our metadata
-        if not data_streamed_at_current_time:
-            print("THE DATA STREAM HAS ENDED")
-            break
-        elif streamer.open_file_count != 0 or streamer.closed_file_count != 0:
-            socketio.emit('new_data', {'data': data_streamed_at_current_time, 'is_resting': is_resting, 'open_file_count': streamer.open_file_count, 'closed_file_count': streamer.closed_file_count, 'window_size': WINDOW_SIZE}, namespace='/test')
-        else:
-            socketio.emit('new_data', {'data': data_streamed_at_current_time, 'is_resting': is_resting, 'open_file_count': streamer.open_file_count, 'closed_file_count': streamer.closed_file_count, 'window_size': WINDOW_SIZE}, namespace='/test')
-        socketio.sleep(0.25)    # Necessary time delay
-
-    # Update the count in the analytics chart
+# Update the count in the analytics chart
+def update_analytics_chart():
+    global streamer, firebase_comm
     if streamer.open_file_count > 0:
         firebase_comm.update_open_file_count(streamer.open_file_count)
     if streamer.closed_file_count > 0:
         firebase_comm.update_closed_file_count(streamer.closed_file_count)
 
-## PAGE FUNCTIONS (don't worry about these, they just load everything) ##
+# Our website's bread and butter
+def eeg_processor():
+    global streamer, firebase_comm
+    # Ignore this boolean for rn. It's unecessary
+    is_resting = False
+    # Get the file counts (metadata) just because it's good to display it right off the bat
+    streamer.open_file_count = firebase_comm.get_open_file_count()
+    streamer.closed_file_count = firebase_comm.get_closed_file_count()
+    # Our program's main loop
+    while not thread_stop_event.isSet():
+        # Collect eeg data
+        data_streamed_at_current_time = streamer.get_data()
+        add_data_streamed_at_current_time()
+        # Once data stops getting produced, end the program. Also included: code to initially display our metadata
+        if not data_streamed_at_current_time:
+            break
+        else:
+            socketio.emit('new_data', {
+                'data': data_streamed_at_current_time, 
+                'is_resting': is_resting, 
+                'open_file_count': streamer.open_file_count, 
+                'closed_file_count': streamer.closed_file_count, 
+                'window_size': WINDOW_SIZE}, namespace='/test')
+        socketio.sleep(0.25)    # Necessary time delay
+    update_analytics_chart()
+    print("The data stream has ended")
+
+## Page rendering functions ##
 
 @app.route('/')
 def home():
@@ -102,14 +109,12 @@ def footer():
 def networkmodal():
     return render_template("networkmodal.html")
 
-## BUTTON FUNCTIONS ##
+## Button-triggered functions ##
 
 # Set all variables to begin collecting eeg data for open eyes
 @app.route('/start_recording_open')
 def start_recording_open():
     global streamer
-    #streamer.open_file_count = metadata.document("open_file_count").get().to_dict()['count']
-    #streamer.closed_file_count = metadata.document("closed_file_count").get().to_dict()['count']
     streamer.recording_class = "OPEN"
     return "200"
 
@@ -117,8 +122,6 @@ def start_recording_open():
 @app.route('/start_recording_closed')
 def start_recording_closed():
     global streamer
-    #streamer.open_file_count = metadata.document("open_file_count").get().to_dict()['count']
-    #streamer.closed_file_count = metadata.document("closed_file_count").get().to_dict()['count']
     streamer.recording_class = "CLOSED"
     return "200"
 
@@ -128,30 +131,31 @@ def create_network():
     global streamer
     data, labels = classifier.build_data(firebase_comm=firebase_comm)
     if data is not None:
-        #train_network(data, labels)
-        print("Success")
+        classifier.train_network(data, labels)
+        print("Network created!")
     else:
         print("Unable to create network")
     return "200"
 
-## THREADING FUNCTIONS ##
+## Threading functions ##
 
+# Actions to take when the website loads (start thread)
 @socketio.on('connect', namespace='/test')
 def test_connect():
     # Need visibility of the global thread object
     global thread
     print('Client connected')
-
     # Start the thread only if the thread has not been started before.
     if not thread.is_alive():
         print("Starting Thread")
         thread = socketio.start_background_task(eeg_processor)
 
+# Actions to take when the thread ends
 @socketio.on('disconnect', namespace='/test')
 def test_disconnect():
     print('Client disconnected')
 
-## RUN THE THING ##
+## Run the thing ##
 
 if __name__ == '__main__':
     socketio.run(app)
