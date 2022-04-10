@@ -1,34 +1,16 @@
-#!/usr/bin/env python3
+# IMPORT SOME SHIT
 
 from flask_socketio import SocketIO, emit
 from flask import Flask, render_template, url_for, copy_current_request_context
-from firebase_admin import credentials, firestore, initialize_app, ml
+
 from threading import Thread, Event
 
-from random import random
-from time import sleep
-from scipy import signal
+import classifier
+from data_streamer import DataStreamer
+from firebase_communicator import FirebaseCommunicator
+from const import *
 
-import numpy as np
-import pickle as pkl
-import tensorflow as tf
-from tensorflow.keras import layers, models
-
-import mne
-
-## INITIALIZE SOME SHIT ##
-
-# Firebase
-
-cred = credentials.Certificate('firebase_key.json')
-
-default_app = initialize_app(cred, options={
-      'storageBucket': 'nam5',
-  })
-db = firestore.client()
-open_recordings = db.collection('open_recordings')
-closed_recordings = db.collection('closed_recordings')
-metadata = db.collection('metadata')
+## INITIALIZE SOME STUFF ##
 
 # Flask
 
@@ -43,102 +25,61 @@ app.config['DEBUG'] = True
 # Turn the flask app into a socketio app
 socketio = SocketIO(app, async_mode=None, logger=True, engineio_logger=True)
 
-# Random number Generator Thread
+# Thread
 thread = Thread()
 thread_stop_event = Event()
+# Streamer
+streamer = DataStreamer()
+# Firebase
+firebase_comm = FirebaseCommunicator()
 
-# Constants for the stfts produced
-
-STFT_f_size = 129
-STFT_t_size = 9
-
-## CONSTANTS AND STUFF ##
-
-WINDOW_SIZE = 100       # How much data we are at in the graph window at once
-DATA_CHUNK_SIZE = 1000  # We chunk the data and upload it to firebase. We do this in time series arrays sized to 1000 vals
-DELAY = 10              # The delay is for the socket to function effectively. It chunks out how much data we get at a time. Without a good enough delay the program lags and breaks
-
-recording_class = "OFF" # At the outset, we are not recording for any state of mind; the system is off
-
-# This is for the user's reference; how much data in one state is there versus another?
-open_file_count = 0
-closed_file_count = 0
-
-all_data = []           # All of le data
-t = 0                   # The current time, which tells us how to parse out the data into the site
-
-## CORE FUNCTIONS ##
-
-# Clamps val between zero and one
-def clamp(val):
-    return min(val, 0.99999)
-
-# Applies a butterworth filter to the data
-def filter_data(data):
-    lowcut, highcut = 14, 71    # 14Hz, 71Hz cutoffs
-    nyq = 0.5 * 128             # Sample freq is 128
-
-    low = lowcut / nyq
-    high = clamp(highcut / nyq)
-
-    b, a = signal.butter(9, [low, high], btype="band")  # Bandpass, which means we select a "band" of frequencies
-    filtered = signal.lfilter(b, a, data)
-    return filtered
-
-# Since we don't yet have the openbci headset, this data comes from a file which will be attached in the repository
-def collect_edf_data():
-    global all_data
-    raw_data = mne.io.read_raw_edf("demo_data/S001R01.edf")
-    all_data = raw_data.get_data()[0].tolist()[:1000]
-
-# Get all the data in a certain time window
-def get_data():
-    global t, all_data, train_data_size
-    t += DELAY
-    return all_data[t-DELAY: t]
 
 # Our website's bread and butter
 def eeg_processor():
-    global fft_data, open_file_count, closed_file_count
+    global streamer, firebase_comm
+    # Ignore this boolea for rn. It's unecessary
     is_resting = False
 
     # Get the file counts (metadata) just because it's good to display it right off the bat
-    open_file_count = metadata.document("open_file_count").get().to_dict()['count']
-    closed_file_count = metadata.document("closed_file_count").get().to_dict()['count']
+    streamer.open_file_count = firebase_comm.get_open_file_count()
+    streamer.closed_file_count = firebase_comm.get_closed_file_count()
 
     while not thread_stop_event.isSet():
         # Collect eeg data
-        data = get_data()
+        data_streamed_at_current_time = streamer.get_data()
+        t = streamer.get_time()
+
         # If we have enough data to chunk and add to database, let's do so
         if t > 0 and t%DATA_CHUNK_SIZE == 0:
             # We will make and store a time series, adding it to our database
-            if recording_class == "OPEN":
-                open_recordings.document("recording_" + str(open_file_count)).set({'data': all_data[t-DATA_CHUNK_SIZE: t]})
-                open_file_count += 1
-            elif recording_class == "CLOSED":
-                closed_recordings.document("recording_" + str(closed_file_count)).set({'data': all_data[t-DATA_CHUNK_SIZE: t]})
-                closed_file_count += 1
+            if streamer.recording_class == "OPEN":
+                firebase_comm.add_data_to_open_recordings(streamer.open_file_count, streamer.data[t-DATA_CHUNK_SIZE: t])
+                streamer.open_file_count += 1
+            elif streamer.recording_class == "CLOSED":
+                firebase_comm.add_data_to_closed_recordings(streamer.closed_file_count, streamer.data[t-DATA_CHUNK_SIZE: t])
+                streamer.closed_file_count += 1
         # Once data stops getting produced, end the program. Also included: code to initially display our metadata
-        if not data:
+        if not data_streamed_at_current_time:
             print("THE DATA STREAM HAS ENDED")
             break
-        elif open_file_count != 0 or closed_file_count != 0:
-            socketio.emit('new_data', {'data': data, 'is_resting': is_resting, 'open_file_count': open_file_count, 'closed_file_count': closed_file_count, 'window_size': WINDOW_SIZE}, namespace='/test')
+        elif streamer.open_file_count != 0 or streamer.closed_file_count != 0:
+            socketio.emit('new_data', {'data': data_streamed_at_current_time, 'is_resting': is_resting, 'open_file_count': streamer.open_file_count, 'closed_file_count': streamer.closed_file_count, 'window_size': WINDOW_SIZE}, namespace='/test')
         else:
-            socketio.emit('new_data', {'data': data, 'is_resting': is_resting, 'open_file_count': open_file_count, 'closed_file_count': closed_file_count, 'window_size': WINDOW_SIZE}, namespace='/test')
+            socketio.emit('new_data', {'data': data_streamed_at_current_time, 'is_resting': is_resting, 'open_file_count': streamer.open_file_count, 'closed_file_count': streamer.closed_file_count, 'window_size': WINDOW_SIZE}, namespace='/test')
         socketio.sleep(0.25)    # Necessary time delay
 
     # Update the count in the analytics chart
-    if open_file_count > 0:
-        metadata.document("open_file_count").update({'count': open_file_count})
-    if closed_file_count > 0:
-        metadata.document("closed_file_count").update({'count': closed_file_count})
+    if streamer.open_file_count > 0:
+        firebase_comm.update_open_file_count(streamer.open_file_count)
+    if streamer.closed_file_count > 0:
+        firebase_comm.update_closed_file_count(streamer.closed_file_count)
 
 ## PAGE FUNCTIONS (don't worry about these, they just load everything) ##
 
 @app.route('/')
 def home():
-    collect_edf_data()
+    global streamer
+    streamer.collect_edf_data()
     return render_template('home.html')
 
 @app.route("/about")
@@ -166,111 +107,39 @@ def networkmodal():
 # Set all variables to begin collecting eeg data for open eyes
 @app.route('/start_recording_open')
 def start_recording_open():
-    global recording_class, open_file_count, closed_file_count
-    open_file_count = metadata.document("open_file_count").get().to_dict()['count']
-    closed_file_count = metadata.document("closed_file_count").get().to_dict()['count']
-    recording_class = "OPEN"
+    global streamer
+    #streamer.open_file_count = metadata.document("open_file_count").get().to_dict()['count']
+    #streamer.closed_file_count = metadata.document("closed_file_count").get().to_dict()['count']
+    streamer.recording_class = "OPEN"
     return "200"
 
 # Set all variables to begin collecting eeg data for closed eyes
 @app.route('/start_recording_closed')
 def start_recording_closed():
-    global recording_class
-    global recording_class, open_file_count, closed_file_count
-    open_file_count = metadata.document("open_file_count").get().to_dict()['count']
-    closed_file_count = metadata.document("closed_file_count").get().to_dict()['count']
-    recording_class = "CLOSED"
+    global streamer
+    #streamer.open_file_count = metadata.document("open_file_count").get().to_dict()['count']
+    #streamer.closed_file_count = metadata.document("closed_file_count").get().to_dict()['count']
+    streamer.recording_class = "CLOSED"
     return "200"
-
-## DEEP HURTING FUNCTION -- NOT AT ALL FINISHED ##
 
 # Create a neural network with the data collected. This function is unfinished
 @app.route('/create_network')
 def create_network():
-    print("FINISHED")
-    data, labels = build_data()
+    global streamer
+    data, labels = classifier.build_data(firebase_comm=firebase_comm)
     if data is not None:
-        """
-        arasi_file = open('arasi_file', 'ab')
-        pkl.dump({"data": data, "labels": labels}, arasi_file)
-        arasi_file.close()
-        """
         #train_network(data, labels)
-        print("Sucess")
+        print("Success")
     else:
         print("Unable to create network")
     return "200"
-
-def build_data():
-    print("****************** CREATING NETWORK ******************")
-    open_file_count =  metadata.document("open_file_count").get().to_dict()['count']
-    closed_file_count =  metadata.document("closed_file_count").get().to_dict()['count']
-
-    all_data = np.zeros((open_file_count + closed_file_count, STFT_f_size, STFT_t_size))
-    all_labels = np.zeros((open_file_count + closed_file_count, 2))
-
-    for count in range(open_file_count):
-        data = open_recordings.document("recording_" + str(count)).get().to_dict()['data']
-        filtered_data = filter_data(data)
-        f, t, data_stft = signal.stft(filtered_data, nperseg=64)
-        print(data_stft.shape)
-        #all_data[count] = np.abs(data_stft)
-        #all_labels[count][0] = 1
-
-    for count in range(closed_file_count):
-        data = closed_recordings.document("recording_" + str(count)).get().to_dict()['data']
-        filtered_data = filter_data(data)
-        f, t, data_stft = signal.stft(filtered_data, nperseg=64)
-        print(data_stft.shape)
-        #all_data[count + open_file_count] = np.abs(data_stft)
-        #all_labels[count + open_file_count][1] = 1
-    return all_data, all_labels
-
-def train_network(data, labels):
-
-    reshaped_data = data.reshape(data.shape[0], data.shape[1], data.shape[2], 1)
-
-    model = models.Sequential()
-    model.add(layers.Conv2D(32, (3, 3), activation='relu', input_shape=reshaped_data.shape[1:]))
-    model.add(layers.MaxPooling2D((2, 2)))
-    """model.add(layers.Conv2D(64, (3, 3), activation='relu'))
-    model.add(layers.MaxPooling2D((2, 2)))
-    model.add(layers.Conv2D(64, (3, 3), activation='relu'))"""
-    model.add(layers.Flatten())
-    model.add(layers.Dense(64, activation='relu'))
-    model.add(layers.Dense(2))
-
-    model.compile(optimizer='adam',
-              loss='categorical_crossentropy',
-              metrics=['accuracy'])
-              
-    model.fit(reshaped_data, labels, epochs=10)
-
-    # Convert the model to TensorFlow Lite and upload it to Cloud Storage
-    source = ml.TFLiteGCSModelSource.from_keras_model(model)
-
-    # Load a tflite file and upload it to Cloud Storage
-    source = ml.TFLiteGCSModelSource.from_tflite_model_file('arasi.tflite')
-
-    # Create the model object
-    tflite_format = ml.TFLiteFormat(model_source=source)
-    model = ml.Model(
-        display_name="arasi_model",  # This is the name you use from your app to load the model.
-        tags=["n/a"],             # Optional tags for easier management.
-        model_format=tflite_format)
-
-    # Add the model to your Firebase project and publish it
-    new_model = ml.create_model(model)
-    ml.publish_model(new_model.model_id)
-    
-    print("NETWORK BUILT")
 
 ## THREADING FUNCTIONS ##
 
 @socketio.on('connect', namespace='/test')
 def test_connect():
     # Need visibility of the global thread object
-    global thread, fft_data
+    global thread
     print('Client connected')
 
     # Start the thread only if the thread has not been started before.
