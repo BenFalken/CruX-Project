@@ -125,6 +125,13 @@ def start_recording_closed():
     streamer.recording_class = "CLOSED"
     return "200"
 
+# Don't record from any recording class
+@app.route('/stop_recording')
+def stop_recording():
+    global streamer
+    streamer.recording_class = "OFF"
+    return "200"
+
 # Create a neural network with the data collected. This function is unfinished
 @app.route('/create_network')
 def create_network():
