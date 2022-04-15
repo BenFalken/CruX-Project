@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+### BEN IF YOU DELETE THE SHEBANG ONE MORE TIME I'M GONNA GET YOU (I KNOW WHERE YOU SLEEP)
 ## Import everything ##
 
 from flask_socketio import SocketIO, emit
