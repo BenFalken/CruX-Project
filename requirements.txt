@@ -6,3 +6,5 @@ firebase
 firebase_admin
 mne
 tensorflow
+connexion==2.6.0
+markupsafe==2.0.1

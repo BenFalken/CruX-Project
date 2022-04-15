@@ -65,7 +65,7 @@ def eeg_processor():
     streamer.open_file_count = firebase_comm.get_open_file_count()
     streamer.closed_file_count = firebase_comm.get_closed_file_count()
     # Our program's main loop
-    while not thread_stop_event.isSet():
+    while not thread_stop_event.is_set():
         # Collect eeg data
         data_streamed_at_current_time = streamer.get_data()
         add_data_streamed_at_current_time()
