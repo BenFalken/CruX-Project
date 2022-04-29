@@ -21,6 +21,8 @@ $(document).ready(function(){
     * No ticks on the x or y axis
     * Y axis is clamped between +/-0.0001
     */
+
+    //NOTE: y range used to be +/- 0.0001
     var myChart = new Chart(ctx, {
         type: 'line',
         data: {
@@ -42,8 +44,8 @@ $(document).ready(function(){
             scales : {
                 y : {
                     display: false,
-                    min: -0.0001,
-                    max: 0.0001,
+                    min: -100,
+                    max: 100,
                 },
                 x: {
                     display: false
@@ -206,8 +208,24 @@ function stop_recording() {
     // Reset both buttons
     $("#open-button").css("background-color", '#ea4c89');
     $("#closed-button").css("background-color", '#ea4c89');
+    $("#stream-button").css("background-color", '#4c7bea');
     // Reset
     $.getJSON('/stop_recording',
+        function(data) {
+            //do nothing
+    });
+}
+
+function start_streaming() {
+    // The graph is no longer ready to start collecting and displaying data
+    is_ready = true;
+    // Reset both buttons
+    var color =  $("#stream-button").css("background-color");
+    if (color != 'skyblue') {
+        $("#stream-button").css("background-color", 'skyblue');
+    }
+    // Reset
+    $.getJSON('/start_streaming',
         function(data) {
             //do nothing
     });
