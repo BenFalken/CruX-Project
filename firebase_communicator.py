@@ -4,7 +4,7 @@ class FirebaseCommunicator:
     def __init__(self):
         cred = credentials.Certificate('firebase_key.json')
         default_app = initialize_app(cred, options={
-            'storageBucket': 'nam5',
+            'storageBucket': 'arasi-3c613.appspot.com',
         })
 
         db = firestore.client()
@@ -37,20 +37,26 @@ class FirebaseCommunicator:
     def get_data_from_closed_recordings(self, file_count):
         return self.closed_recordings.document("recording_" + str(file_count)).get().to_dict()['data']
 
-    def save_network(self, model):
+    def save_network(self, model, model_id="arasi_model"):
         # Load a tflite file and upload it to Cloud Storage
         source = ml.TFLiteGCSModelSource.from_keras_model(model)
         # Create the model object
         tflite_format = ml.TFLiteFormat(model_source=source)
         model = ml.Model(
-            display_name="arasi_model",  # This is the name you use from your app to load the model.
+            display_name=model_id,  # This is the name you use from your app to load the model.
             model_format=tflite_format)
         
         # Add the model to your Firebase project and publish it
         new_model = ml.create_model(model)
+        models = ml.list_models().iterate_all()
+        for model in models:
+            if model.model_id == model_id:
+                ml.update_model(new_model.model_id)
+                return model
         ml.publish_model(new_model.model_id)
+        return model
     
-    def get_network(model_id):
+    def get_network(model_id="arasi_model"):
         models = ml.list_models().iterate_all()
         for model in models:
             if model.model_id == model_id:

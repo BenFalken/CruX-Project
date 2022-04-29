@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 ### BEN IF YOU DELETE THE SHEBANG ONE MORE TIME I'M GONNA GET YOU (I KNOW WHERE YOU SLEEP)
-## Import everything ##
 
+## Import everything ##
 from flask_socketio import SocketIO, emit
 from flask import Flask, render_template, url_for, copy_current_request_context
 
@@ -9,8 +9,8 @@ from threading import Thread, Event
 
 from data_streamer import DataStreamer
 from firebase_communicator import FirebaseCommunicator
+from data_classifier import DataClassifier
 from const import *
-import classifier
 
 ## Initialize some stuff ##
 
@@ -33,20 +33,24 @@ streamer = DataStreamer()
 # Firebase
 firebase_comm = FirebaseCommunicator()
 
+# Classifier
+
+classifier = DataClassifier(firebase_comm=firebase_comm)
+
 ## Functions that facilitate data streaming and database interaction ##
 
 # If we have enough data to chunk out and add to our database, let's do so
 def add_data_streamed_at_current_time():
     global streamer, firebase_comm
-    current_time = streamer.current_time
-    if current_time > 0 and current_time % DATA_CHUNK_SIZE == 0:
-        # We will make and store a time series of size data_chunk_size and add it to our database
-        if streamer.recording_class == "OPEN":
-            firebase_comm.add_data_to_open_recordings(streamer.open_file_count, streamer.data[current_time - DATA_CHUNK_SIZE:current_time])
-            streamer.open_file_count += 1
-        elif streamer.recording_class == "CLOSED":
-            firebase_comm.add_data_to_closed_recordings(streamer.closed_file_count, streamer.data[current_time - DATA_CHUNK_SIZE:current_time])
-            streamer.closed_file_count += 1
+    # We will make and store a time series of size data_chunk_size and add it to our database
+    if streamer.recording_class == "OPEN":
+        firebase_comm.add_data_to_open_recordings(streamer.open_file_count, streamer.all_data)
+        streamer.open_file_count += 1
+        firebase_comm.update_open_file_count(streamer.open_file_count)
+    elif streamer.recording_class == "CLOSED":
+        firebase_comm.add_data_to_closed_recordings(streamer.closed_file_count, streamer.all_data)
+        streamer.closed_file_count += 1
+        firebase_comm.update_closed_file_count(streamer.closed_file_count)
 
 # Update the count in the analytics chart
 def update_analytics_chart():
@@ -56,6 +60,15 @@ def update_analytics_chart():
     if streamer.closed_file_count > 0:
         firebase_comm.update_closed_file_count(streamer.closed_file_count)
 
+def minimize_data(data):
+    minimized_data = []
+    minimized_data_len = 10
+    step_size = int(len(data)/minimized_data_len)
+    for i in range(0, len(data), step_size):
+        minimized_data.append(data[i])
+    return minimized_data
+
+
 # Our website's bread and butter
 def eeg_processor():
     global streamer, firebase_comm
@@ -64,17 +77,34 @@ def eeg_processor():
     # Get the file counts (metadata) just because it's good to display it right off the bat
     streamer.open_file_count = firebase_comm.get_open_file_count()
     streamer.closed_file_count = firebase_comm.get_closed_file_count()
+
+
     # Our program's main loop
-    while not thread_stop_event.is_set():
+    while not thread_stop_event.isSet():
+        #  BRAIN STUFF #
+
+        #print(eeg_data)
+        #print('------------------------------------------------------------------------------------------')
+
         # Collect eeg data
-        data_streamed_at_current_time = streamer.get_data()
-        add_data_streamed_at_current_time()
-        # Once data stops getting produced, end the program. Also included: code to initially display our metadata
-        if not data_streamed_at_current_time:
-            break
+        if not is_resting:
+            data = streamer.get_current_data()
+            data = minimize_data(data)
         else:
+            data = None
+
+        # Once data stops getting produced, end the program. Also included: code to initially display our metadata
+        if not data:
+            continue
+        else:
+            if streamer.is_recording_training_data and streamer.current_time > 0 and streamer.current_time % DATA_CHUNK_SIZE == 0:
+                add_data_streamed_at_current_time()
+            elif streamer.is_streaming_testing_data and streamer.current_time > DATA_CHUNK_SIZE:
+                model = firebase_comm.get_network()
+                print("PREDICTION: " + str(model.predict(streamer.all_data)))
+                #run all_data through the network and get a result
             socketio.emit('new_data', {
-                'data': data_streamed_at_current_time, 
+                'data': data,  
                 'is_resting': is_resting, 
                 'open_file_count': streamer.open_file_count, 
                 'closed_file_count': streamer.closed_file_count, 
@@ -88,7 +118,7 @@ def eeg_processor():
 @app.route('/')
 def home():
     global streamer
-    streamer.collect_edf_data()
+    #streamer.collect_edf_data()
     return render_template('home.html')
 
 @app.route("/about")
@@ -117,6 +147,7 @@ def networkmodal():
 @app.route('/start_recording_open')
 def start_recording_open():
     global streamer
+    streamer.is_recording_training_data = True
     streamer.recording_class = "OPEN"
     return "200"
 
@@ -124,6 +155,7 @@ def start_recording_open():
 @app.route('/start_recording_closed')
 def start_recording_closed():
     global streamer
+    streamer.is_recording_training_data = True
     streamer.recording_class = "CLOSED"
     return "200"
 
@@ -131,6 +163,8 @@ def start_recording_closed():
 @app.route('/stop_recording')
 def stop_recording():
     global streamer
+    update_analytics_chart()
+    streamer.is_recording_training_data = False
     streamer.recording_class = "OFF"
     return "200"
 
@@ -138,12 +172,18 @@ def stop_recording():
 @app.route('/create_network')
 def create_network():
     global streamer
-    data, labels = classifier.build_data(firebase_comm=firebase_comm)
+    data, labels = classifier.build_data()
     if data is not None:
         classifier.train_network(data, labels)
         print("Network created!")
     else:
         print("Unable to create network")
+    return "200"
+
+@app.route('/start_streaming')
+def start_streaming():
+    global streamer
+    streamer.is_streaming_testing_data = True
     return "200"
 
 ## Threading functions ##
