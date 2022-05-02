@@ -22,9 +22,10 @@ Now, install all required packages
 
 `$ pip install -r requirements.txt`
 
-Email to the firebase_key.json certificate and it will be provided.
 To run, enter the command:
 
 `$ export FLASK_APP=application`
 
 `$ flask run`
+
+Email to request the firebase_key.json certificate, and it will be provided.
