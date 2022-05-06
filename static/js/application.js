@@ -1,5 +1,5 @@
 // This boolean determines whether or not we are ready to read the data being sent from application.py
-let is_ready = false;
+let graph_is_ready = false;
 
 $(document).ready(function(){
     // These variables will eventually be used for the avatar being moved. It has the ID "resting"
@@ -43,9 +43,7 @@ $(document).ready(function(){
             },
             scales : {
                 y : {
-                    display: false,
-                    min: -100,
-                    max: 100,
+                    display: false
                 },
                 x: {
                     display: false
@@ -136,7 +134,7 @@ $(document).ready(function(){
         addDataToBar(fileCountChart, msg.closed_file_count);
 
         // Update the EEG graph
-        if (is_ready) {
+        if (graph_is_ready) {
             // The variable for the data's fixed size is constant but it doesn't matter if we query for it every tick (we can optimize later)
             let WINDOW_SIZE = msg.window_size;
 
@@ -149,8 +147,8 @@ $(document).ready(function(){
                 }            
             }
 
-            // move the avatar! This is currently not in use, since is_resting is always false.
-            if (!msg.is_resting) {
+            // move the avatar! This is currently not in use, since graph_frozen is always false.
+            if (!msg.graph_frozen) {
                 count = clamp(count + speed);
                 $("#resting").css("margin-left", count);
             }
@@ -161,7 +159,7 @@ $(document).ready(function(){
 
 function start_recording_open() {
     // The graph is ready to start collecting and displaying data
-    is_ready = true;
+    graph_is_ready = true;
     // Change the button color to indicate it has been pressed
     var color =  $("#open-button").css("background-color");
     if (color != 'skyblue') {
@@ -176,7 +174,7 @@ function start_recording_open() {
 
 function start_recording_closed() {
     // The graph is ready to start collecting and displaying data
-    is_ready = true;
+    graph_is_ready = true;
     // Change the button color to indicate it has been pressed
     var color =  $("#closed-button").css("background-color");
     if (color != 'skyblue') {
@@ -194,7 +192,7 @@ function create_network() {
     alert("Now processing your data!")
     console.log("CREATED NETWORK");
     // The graph is no longer ready to start collecting and displaying data
-    is_ready = false;
+    graph_is_ready = false;
     // Call "create network" function
     $.getJSON('/create_network',
         function(data) {
@@ -204,7 +202,7 @@ function create_network() {
 
 function stop_recording() {
     // The graph is no longer ready to start collecting and displaying data
-    is_ready = false;
+    graph_is_ready = false;
     // Reset both buttons
     $("#open-button").css("background-color", '#ea4c89');
     $("#closed-button").css("background-color", '#ea4c89');
@@ -218,7 +216,7 @@ function stop_recording() {
 
 function start_streaming() {
     // The graph is no longer ready to start collecting and displaying data
-    is_ready = true;
+    graph_is_ready = true;
     // Reset both buttons
     var color =  $("#stream-button").css("background-color");
     if (color != 'skyblue') {
