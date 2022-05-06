@@ -17,4 +17,4 @@ NUM_CLASSES = 2
 
 # Scaling factor for conversion between raw data (counts) and voltage potentials:
 SCALE_FACTOR_EEG = (4500000)/24/(2**23-1) #uV/count
-SCALE_FACTOR_AUX = 0.002 / (2**4) 
+SCALE_FACTOR_AUX = 0.002 / (2**4)

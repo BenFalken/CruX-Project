@@ -1,6 +1,5 @@
 from time import sleep
 from const import *
-import mne
 
 import argparse
 import time
@@ -12,31 +11,42 @@ from pylsl import StreamInfo, StreamOutlet
 
 class DataStreamer:
     def __init__(self):
+        # Checks for what exactly the webpage is doing -- nothing, recording, streaming?
         self.is_recording_training_data = False
         self.is_streaming_testing_data = False
-
         self.recording_class = "OFF" # At the outset, we are not recording for any state of mind; the system is off
+        # Tracks how many files we have stored in our database for eyes open, eyes closed data
         self.open_file_count = 0
         self.closed_file_count = 0
-
+        # The user's current brain signals
         self.all_data = []
+        # The current time, which tells us how to parse out the data into the site
+        self.current_time = 0    
+        # Simple setup of our board
+        self.init_board()
 
-        BoardShim.enable_dev_board_logger()
-        params = BrainFlowInputParams()
-        params.serial_port = '/dev/cu.usbserial-4'
-        self.board = BoardShim(BoardIds.CYTON_BOARD.value, params) # added cyton board id here
-        
-        self.board.prepare_session()
-        self.board.start_stream()
+    # Attempts to connect to open bci cyton board
+    def init_board(self):
+        try:
+            BoardShim.enable_dev_board_logger()
+            params = BrainFlowInputParams()
+            params.serial_port = '/dev/cu.usbserial-4'
+            self.board = BoardShim(BoardIds.CYTON_BOARD.value, params) # added cyton board id here
+            
+            self.board.prepare_session()
+            self.board.start_stream()
+        except:
+            print("Error connecting to board. Will stream data synthetically.")
 
-        self.current_time = 0    # The current time, which tells us how to parse out the data into the site
-
-    # Get all the data in a certain time window
+    # Get all the data in a certain time window. If board isn't connected, just return a string of ones
     def get_current_data(self):
-        data = self.board.get_board_data(DELAY) # this gets data continiously
-        self.current_time += DELAY
-        data_list = [val*SCALE_FACTOR_EEG for val in data[0]]
+        try:
+            data = self.board.get_board_data(DELAY) # this gets data continiously
+            data_list = [val*SCALE_FACTOR_EEG for val in data[2]]
+            if len(self.all_data) > DATA_CHUNK_SIZE:
+                self.all_data = self.all_data[-1*DATA_CHUNK_SIZE:]
+        except:
+            data_list = [1 for _ in range(DELAY)]
         self.all_data.extend(data_list)
-        if len(self.all_data) > DATA_CHUNK_SIZE:
-            self.all_data = self.all_data[-1*DATA_CHUNK_SIZE:]
+        self.current_time += DELAY
         return data_list

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 ### BEN IF YOU DELETE THE SHEBANG ONE MORE TIME I'M GONNA GET YOU (I KNOW WHERE YOU SLEEP)
 
-## Import everything ##
+## Import everything <3 ##
 from flask_socketio import SocketIO, emit
 from flask import Flask, render_template, url_for, copy_current_request_context
 
@@ -27,14 +27,13 @@ socketio = SocketIO(app, async_mode=None, logger=True, engineio_logger=True)
 thread = Thread()
 thread_stop_event = Event()
 
-# Streamer
+# This thingy streams data from the headset. More info in data_streamer.py
 streamer = DataStreamer()
 
-# Firebase
+# This thingy communicates with our database to fetch and deposit data. More info in firebase_communication.py
 firebase_comm = FirebaseCommunicator()
 
-# Classifier
-
+# This thingy classifies our data and shit. More info in data_classifier.py
 classifier = DataClassifier(firebase_comm=firebase_comm)
 
 ## Functions that facilitate data streaming and database interaction ##
@@ -42,15 +41,22 @@ classifier = DataClassifier(firebase_comm=firebase_comm)
 # If we have enough data to chunk out and add to our database, let's do so
 def add_data_streamed_at_current_time():
     global streamer, firebase_comm
-    # We will make and store a time series of size data_chunk_size and add it to our database
+    # If currently recording open eyes, record into our open eyes category
     if streamer.recording_class == "OPEN":
         firebase_comm.add_data_to_open_recordings(streamer.open_file_count, streamer.all_data)
         streamer.open_file_count += 1
         firebase_comm.update_open_file_count(streamer.open_file_count)
+    # If currently recording closed eyes, record into our closed eyes category
     elif streamer.recording_class == "CLOSED":
         firebase_comm.add_data_to_closed_recordings(streamer.closed_file_count, streamer.all_data)
         streamer.closed_file_count += 1
         firebase_comm.update_closed_file_count(streamer.closed_file_count)
+
+def initialize_analytics_chart():
+    global streamer, firebase_comm
+    # Get the file counts (metadata) just because it's good to display it right off the bat
+    streamer.open_file_count = firebase_comm.get_open_file_count()
+    streamer.closed_file_count = firebase_comm.get_closed_file_count()
 
 # Update the count in the analytics chart
 def update_analytics_chart():
@@ -60,55 +66,45 @@ def update_analytics_chart():
     if streamer.closed_file_count > 0:
         firebase_comm.update_closed_file_count(streamer.closed_file_count)
 
-def minimize_data(data):
-    minimized_data = []
-    minimized_data_len = 10
-    step_size = int(len(data)/minimized_data_len)
+# Downsample our signal for the graph so it's more efficient
+def downsample_data(data):
+    downsampled_data = []
+    samples = 10
+    step_size = int(len(data)/samples)
     for i in range(0, len(data), step_size):
-        minimized_data.append(data[i])
-    return minimized_data
+        downsampled_data.append(data[i])
+    return downsampled_data
 
+# Send all necessary info to the main page/graphs
+def send_data(data):
+    socketio.emit('new_data', {
+        'data': data,  
+        'graph_frozen': False, 
+        'open_file_count': streamer.open_file_count, 
+        'closed_file_count': streamer.closed_file_count, 
+        'window_size': WINDOW_SIZE}, namespace='/test')
 
-# Our website's bread and butter
+# Decides whether to send data to be stored in our database, or to feed it into a neural network for testing. Then, we send the data to our webpage
+def process_data(data):
+    global streamer, classifier
+    if streamer.is_recording_training_data and streamer.current_time > 0 and streamer.current_time % DATA_CHUNK_SIZE == 0:
+        add_data_streamed_at_current_time()
+    elif streamer.is_streaming_testing_data and streamer.current_time > DATA_CHUNK_SIZE:
+        prediction = classifier.classify_input(streamer.all_data)
+        print("PREDICTION: " + str(prediction))
+    send_data(data)
+
+# Our website's bread and butter. Initializes the charts and webpage, then collects data until the page is closed
 def eeg_processor():
-    global streamer, firebase_comm
-    # Ignore this boolean for rn. It's unecessary
-    is_resting = False
-    # Get the file counts (metadata) just because it's good to display it right off the bat
-    streamer.open_file_count = firebase_comm.get_open_file_count()
-    streamer.closed_file_count = firebase_comm.get_closed_file_count()
-
-
-    # Our program's main loop
+    global streamer
+    initialize_analytics_chart()
+    send_data(data=[])
     while not thread_stop_event.isSet():
-        #  BRAIN STUFF #
-
-        #print(eeg_data)
-        #print('------------------------------------------------------------------------------------------')
-
         # Collect eeg data
-        if not is_resting:
+        if streamer.is_recording_training_data or streamer.is_streaming_testing_data:
             data = streamer.get_current_data()
-            data = minimize_data(data)
-        else:
-            data = None
-
-        # Once data stops getting produced, end the program. Also included: code to initially display our metadata
-        if not data:
-            continue
-        else:
-            if streamer.is_recording_training_data and streamer.current_time > 0 and streamer.current_time % DATA_CHUNK_SIZE == 0:
-                add_data_streamed_at_current_time()
-            elif streamer.is_streaming_testing_data and streamer.current_time > DATA_CHUNK_SIZE:
-                model = firebase_comm.get_network()
-                print("PREDICTION: " + str(model.predict(streamer.all_data)))
-                #run all_data through the network and get a result
-            socketio.emit('new_data', {
-                'data': data,  
-                'is_resting': is_resting, 
-                'open_file_count': streamer.open_file_count, 
-                'closed_file_count': streamer.closed_file_count, 
-                'window_size': WINDOW_SIZE}, namespace='/test')
+            data = downsample_data(data)
+            process_data(data)
         socketio.sleep(0.25)    # Necessary time delay
     update_analytics_chart()
     print("The data stream has ended")
@@ -118,7 +114,6 @@ def eeg_processor():
 @app.route('/')
 def home():
     global streamer
-    #streamer.collect_edf_data()
     return render_template('home.html')
 
 @app.route("/about")
@@ -148,6 +143,7 @@ def networkmodal():
 def start_recording_open():
     global streamer
     streamer.is_recording_training_data = True
+    streamer.is_streaming_testing_data = False
     streamer.recording_class = "OPEN"
     return "200"
 
@@ -156,19 +152,21 @@ def start_recording_open():
 def start_recording_closed():
     global streamer
     streamer.is_recording_training_data = True
+    streamer.is_streaming_testing_data = False
     streamer.recording_class = "CLOSED"
     return "200"
 
-# Don't record from any recording class
+# Don't record from any recording class, and don't stream any data
 @app.route('/stop_recording')
 def stop_recording():
     global streamer
     update_analytics_chart()
     streamer.is_recording_training_data = False
+    streamer.is_streaming_testing_data = False
     streamer.recording_class = "OFF"
     return "200"
 
-# Create a neural network with the data collected. This function is unfinished
+# Create a neural network with the data collected
 @app.route('/create_network')
 def create_network():
     global streamer
@@ -180,9 +178,11 @@ def create_network():
         print("Unable to create network")
     return "200"
 
+# Start streaming data from the headset, with no intention of recording it. Data will be fed into neural network
 @app.route('/start_streaming')
 def start_streaming():
     global streamer
+    streamer.is_recording_training_data = False
     streamer.is_streaming_testing_data = True
     return "200"
 
@@ -191,10 +191,8 @@ def start_streaming():
 # Actions to take when the website loads (start thread)
 @socketio.on('connect', namespace='/test')
 def test_connect():
-    # Need visibility of the global thread object
     global thread
     print('Client connected')
-    # Start the thread only if the thread has not been started before.
     if not thread.is_alive():
         print("Starting Thread")
         thread = socketio.start_background_task(eeg_processor)
