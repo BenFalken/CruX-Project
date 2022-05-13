@@ -203,3 +203,13 @@ h6 {
     padding-top: 1em;
     padding-bottom: 1em;
 }
+
+#avatar {
+    margin-left: 50%;
+    min-height: 50px;
+    min-width: 50px;
+    max-height: 50px;
+    max-width: 50px;
+    background-color: aquamarine;
+    border: solid 2px slategray;
+}

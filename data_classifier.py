@@ -48,7 +48,7 @@ class DataClassifier:
         return filtered
 
     # Add data from the database to our classifier
-    def load_in_data(self, data):
+    def load_in_data(self, data, label):
         for signal in data:
             signal = signal.to_dict()['data']
             filtered_signal = self.filter_data(signal)
@@ -60,7 +60,7 @@ class DataClassifier:
             for i in range(STFT_F_SIZE):
                 for j in range(STFT_T_SIZE):
                     self.all_data[self.random_indices[self.count]][i][j][0] = signal_stft[i][j]
-            self.all_labels[self.random_indices[self.count]] = 0
+            self.all_labels[self.random_indices[self.count]] = label
             self.count += 1
 
     # Verifies, initializes and loads our data and labels
@@ -73,10 +73,10 @@ class DataClassifier:
         self.initialize_data_and_labels()
         # Load in open eyes data
         open_data = self.firebase_comm.open_recordings.stream()
-        self.load_in_data(data=open_data)
+        self.load_in_data(data=open_data, label=0)
         # Load in closed eyes data
         closed_data = self.firebase_comm.closed_recordings.stream()
-        self.load_in_data(data=closed_data)
+        self.load_in_data(data=closed_data, label=1)
         return self.all_data, self.all_labels
 
     # Makes our keras model

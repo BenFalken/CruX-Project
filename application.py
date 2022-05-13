@@ -4,7 +4,7 @@
 ## Import everything <3 ##
 from flask_socketio import SocketIO, emit
 from flask import Flask, render_template, url_for, copy_current_request_context
-
+import numpy as np
 from threading import Thread, Event
 
 from data_streamer import DataStreamer
@@ -76,29 +76,39 @@ def downsample_data(data):
     return downsampled_data
 
 # Send all necessary info to the main page/graphs
-def send_data(data):
+def send_data(data=[], direction_to_move=''):
     socketio.emit('new_data', {
         'data': data,  
         'graph_frozen': False, 
+        'direction_to_move': direction_to_move,
         'open_file_count': streamer.open_file_count, 
         'closed_file_count': streamer.closed_file_count, 
         'window_size': WINDOW_SIZE}, namespace='/test')
 
+# Basically looks at which value is greater in magnitude. We interpret the greater value as a command to move our avatar a certain direction
+def process_prediction(prediction):
+    processed_prediction = int(np.argwhere(prediction[0] == np.max(prediction[0]))[0][0])
+    if processed_prediction == 0:
+        return "left"
+    else:
+        return "right"
+
 # Decides whether to send data to be stored in our database, or to feed it into a neural network for testing. Then, we send the data to our webpage
 def process_data(data):
     global streamer, classifier
+    direction_to_move = ''
     if streamer.is_recording_training_data and streamer.current_time > 0 and streamer.current_time % DATA_CHUNK_SIZE == 0:
         add_data_streamed_at_current_time()
     elif streamer.is_streaming_testing_data and streamer.current_time > DATA_CHUNK_SIZE:
         prediction = classifier.classify_input(streamer.all_data)
-        print("PREDICTION: " + str(prediction))
-    send_data(data)
+        direction_to_move = process_prediction(prediction)
+    send_data(data, direction_to_move)
 
 # Our website's bread and butter. Initializes the charts and webpage, then collects data until the page is closed
 def eeg_processor():
     global streamer
     initialize_analytics_chart()
-    send_data(data=[])
+    send_data()
     while not thread_stop_event.isSet():
         # Collect eeg data
         if streamer.is_recording_training_data or streamer.is_streaming_testing_data:

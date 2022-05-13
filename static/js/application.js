@@ -1,10 +1,12 @@
 // This boolean determines whether or not we are ready to read the data being sent from application.py
 let graph_is_ready = false;
+var direction_to_move = '';
 
 $(document).ready(function(){
     // These variables will eventually be used for the avatar being moved. It has the ID "resting"
-    let count = $("#resting").position().left;
-    let speed = 5;
+    let count = $("#avatar").css("margin-left");
+    count = parseInt(count.slice(0, -2))
+    let speed = 10;
     let div_width = 50;
     // Initialize the socket.
     var socket = io.connect('http://' + document.domain + ':' + location.port + '/test');
@@ -128,6 +130,9 @@ $(document).ready(function(){
 
         // Ignore this. I'm not exactly sure why this is still here
         $("#file-count").text(msg.open_file_count.toString() + " " + msg.closed_file_count.toString());
+
+        // Update the direction of the avatar
+        direction_to_move = msg.direction_to_move;
         
         // Update char chart
         addDataToBar(fileCountChart, msg.open_file_count);
@@ -147,10 +152,19 @@ $(document).ready(function(){
                 }            
             }
 
+            console.log("COUNT: " + count)
             // move the avatar! This is currently not in use, since graph_frozen is always false.
-            if (!msg.graph_frozen) {
-                count = clamp(count + speed);
-                $("#resting").css("margin-left", count);
+            if (msg.direction_to_move == 'left') {
+                console.log("WE BEGIN")
+                count -= speed;
+                //count = clamp(count - speed);
+                $("#avatar").css("margin-left", count);
+            }
+            else if (msg.direction_to_move == 'right') {
+                console.log("WE BEGIN")
+                count += speed;
+                //count = clamp(count + speed);
+                $("#avatar").css("margin-left", count);
             }
         }
     });
