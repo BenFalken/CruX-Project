@@ -43,6 +43,7 @@ class DataStreamer:
         try:
             data = self.board.get_board_data(DELAY) # this gets data continiously
             data_list = [val*SCALE_FACTOR_EEG for val in data[2]]
+            print("SIZE: " + str(len(data_list)))
             if len(self.all_data) > DATA_CHUNK_SIZE:
                 self.all_data = self.all_data[-1*DATA_CHUNK_SIZE:]
         except:
