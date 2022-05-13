@@ -5,27 +5,14 @@ A web-based application designed to continuously record motor-based EEG signals,
 Users' information is stored in firebase, and is fetched as the need arises. Threading is used to continuously update the webpage. The layout is a combination of HTML/CSS, Flask, and Bootstrap. We implement a deep learning model based on a tensorflow Conv2D network, using STFTs as inputs.
 
 ## Installation steps
+The following steps assume you already have `git`, `conda`, and `python3.10` installed. Note: if you already have an SSH key set up, it's better to clone via SSH than HTTPS.
 
-Create a python environment
+```bash
+cd
+git clone https://github.com/BenFalken/CruX-Project.git
+cd CruX-Project
+conda create -n crux-project
+conda activate crux-project
+pip install -r requirements.txt```
 
-`$ mkdir myproject`
-
-`$ cd myproject`
-
-`$ python3 -m venv venv`
-
-Activate the python environment
-
-`$ . venv/bin/activate`
-
-Now, install all required packages
-
-`$ pip install -r requirements.txt`
-
-To run, enter the command:
-
-`$ export FLASK_APP=application`
-
-`$ flask run`
-
-Email to request the firebase_key.json certificate, and it will be provided.
+Then contact someone on our team to obtain `firebase_key.json`, and put that directly inside the `CruX-Project` directory. You can now run the application by visiting `http://127.0.0.1:5000/` in your browser while running `flask run` from terminal.
