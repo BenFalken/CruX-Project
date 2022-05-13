@@ -13,6 +13,7 @@ git clone https://github.com/BenFalken/CruX-Project.git
 cd CruX-Project
 conda create -n crux-project
 conda activate crux-project
-pip install -r requirements.txt```
+pip install -r requirements.txt
+```
 
 Then contact someone on our team to obtain `firebase_key.json`, and put that directly inside the `CruX-Project` directory. You can now run the application by visiting `http://127.0.0.1:5000/` in your browser while running `flask run` from terminal.
