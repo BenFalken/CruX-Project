@@ -1,11 +1,11 @@
-// This boolean determines whether or not we are ready to read the data being sent from application.py
+// This boolean determines whether or not we are ready to read the data being sent from app.py
 let graph_is_ready = false;
 var direction_to_move = '';
 
 $(document).ready(function(){
     // These variables will eventually be used for the avatar being moved. It has the ID "resting"
     let count = $("#avatar").css("margin-left");
-    count = parseInt(count.slice(0, -2))
+    count = parseInt(count.slice(0, -2));
     let speed = 10;
     let div_width = 50;
     // Initialize the socket.
@@ -152,7 +152,7 @@ $(document).ready(function(){
                 }            
             }
 
-            console.log("COUNT: " + count)
+            console.log("COUNT: " + count);
             // move the avatar! This is currently not in use, since graph_frozen is always false.
             if (msg.direction_to_move == 'left') {
                 console.log("WE BEGIN")
