@@ -14,6 +14,7 @@ class DataClassifier:
         self.model = None
         self.count = 0
         self.viable_data = True
+        self.model_fetched = False
 
     # Fetches the number of files pertaining to eyes open, eyes closed data
     def initialize_file_counts(self):
@@ -122,7 +123,9 @@ class DataClassifier:
 
     # Classifies the signal streamed in from the headset
     def classify_input(self, data):
-        self.firebase_comm.get_model_source()
+        if not self.model_fetched:
+            self.firebase_comm.get_model_source()
+            self.model_fetched = True
         # Load TFLite model and allocate tensors.
         interpreter = tf.lite.Interpreter(model_path="arasi_model.tflite")
         interpreter.allocate_tensors()
