@@ -4,3 +4,4 @@ mne
 np
 pkl
 tf
+*.tflite

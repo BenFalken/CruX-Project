@@ -73,13 +73,14 @@ h6 {
 .nav-item {
     text-decoration: none;
 }
-/*
+
 .button-row {
     display: flex;
 }
-*/
+
 #button-container {
     margin-left: 25%;
+    margin-right: 25%;
     min-width: 50%;
     max-width: 50%;
 }
@@ -205,7 +206,7 @@ h6 {
 }
 
 #avatar {
-    margin-left: 50%;
+    margin-left: calc(50% - 25px);
     min-height: 50px;
     min-width: 50px;
     max-height: 50px;
