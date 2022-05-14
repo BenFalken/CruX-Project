@@ -168,6 +168,13 @@ $(document).ready(function(){
             }
         }
     });
+    /*
+    socket.on('disconnect', function () {
+        setTimeout(function () {
+             //do something
+        }, 10000);
+    });
+    */
 });
 
 

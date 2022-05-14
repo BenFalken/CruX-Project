@@ -121,6 +121,7 @@ def eeg_processor():
 @app.route('/')
 def home():
     global streamer
+    send_data()
     return render_template('home.html')
 
 @app.route("/about")
@@ -200,6 +201,7 @@ def start_streaming():
 def test_connect():
     global thread
     print('Client connected')
+    send_data()
     if not thread.is_alive():
         print("Starting Thread")
         thread = socketio.start_background_task(eeg_processor)
