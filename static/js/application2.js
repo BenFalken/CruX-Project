@@ -8,26 +8,13 @@ $(document).ready(function(){
     let displacement_x = $( window ).width()/2;
     let displacement_y = 100;
 
-    let origin_left = $("#avatar").css("margin-left");
-    origin_left = parseInt(origin_left.slice(0, -2));
-
-    let origin_top = $("#avatar").css("margin-top");
-    origin_top = parseInt(origin_top.slice(0, -2));
-
-    let x = origin_left;
-    let y = origin_top;
-
-
-    let speed = origin_left/20;
-    let div_width = 50;
     // Initialize the socket.
-    var socket = io.connect('http://' + document.domain + ':' + location.port + '/test');
+    var socket = io.connect('http://' + document.domain + ':' + location.port + '/training');
     var data_received = [];
 
     // This is how we interact with the two charts in our home page
-
-    //var ctx = document.getElementById('myChart');
-    //var ctx_bar = document.getElementById('file-count');
+    var ctx = document.getElementById('myChart');
+    var ctx_bar = document.getElementById('file-count');
     
     // Our EEG chart. Details on the graph:
     /*
@@ -38,8 +25,6 @@ $(document).ready(function(){
     */
 
     //NOTE: y range used to be +/- 0.0001
-
-    /*
     var myChart = new Chart(ctx, {
         type: 'line',
         data: {
@@ -68,7 +53,6 @@ $(document).ready(function(){
             }
         }
     });
-    */
 
     // Our EEG chart. Details on the graph:
     /*
@@ -78,7 +62,6 @@ $(document).ready(function(){
     * No ticks on the y axis
     * Y axis fixed at 0
     */
-   /*
     var fileCountChart = new Chart(ctx_bar, {
         type: 'bar',
         data: {
@@ -103,14 +86,14 @@ $(document).ready(function(){
             }
         }
     })
-    */
+
     // This function makes sure our avatar does not exceed the bounds on the window, lengthwise
     function clamp(val) {
         var max = $( window ).width() - div_width;
         var min = 0;
         return Math.min(Math.max(val, min), max);
     }
-    /*
+
     // This function appends new data to a chart
     function addData(chart, label, data) {
         chart.data.labels.push(label);
@@ -137,31 +120,26 @@ $(document).ready(function(){
         });
         chart.update();
       }
-      */
 
     // This variable tracks the total amount of data transmitted to the EEG graph. If it exceeds the size of the graph, we remove the oldest data first
-    //let i = 0;
+    let i = 0;
 
     //receive details from server
     socket.on('new_data', function(msg) {
-        var position = $( "#checkerboard" ).position();
-        //origin_x = position.left;
-        //origin_y = position.top;
 
-        console.log("RECIEVED DATA");
+        console.log("RECIEVED DATA 2");
 
         // Ignore this. I'm not exactly sure why this is still here
-        //$("#file-count").text(msg.open_file_count.toString() + " " + msg.closed_file_count.toString());
+        $("#file-count").text(msg.open_file_count.toString() + " " + msg.closed_file_count.toString());
 
         // Update the direction of the avatar
         direction_to_move = msg.direction_to_move;
         
         // Update char chart
-        //addDataToBar(fileCountChart, msg.open_file_count);
-        //addDataToBar(fileCountChart, msg.closed_file_count);
+        addDataToBar(fileCountChart, msg.open_file_count);
+        addDataToBar(fileCountChart, msg.closed_file_count);
 
         // Update the EEG graph
-        /*
         if (graph_is_ready) {
             // The variable for the data's fixed size is constant but it doesn't matter if we query for it every tick (we can optimize later)
             let WINDOW_SIZE = msg.window_size;
@@ -174,36 +152,7 @@ $(document).ready(function(){
                     removeData(myChart);
                 }            
             }
-            var total = origin_x + displacement_x
-            console.log("COUNT: " + total);
-            // move the avatar! This is currently not in use, since graph_frozen is always false.
-            if (msg.direction_to_move == 'left') {
-                //console.log("WE BEGIN")
-                displacement_x -= speed;
-                //count = clamp(count - speed);
-            }
-            else if (msg.direction_to_move == 'right') {
-                //console.log("WE BEGIN")
-                displacement_x += speed;
-                //count = clamp(count + speed);
-            }
-            $("#avatar").css("left", origin_x + displacement_x);
-            $("#avatar").css("top", origin_y + displacement_y);
         }
-        */
-        if (msg.direction_to_move == 'left') {
-            //console.log("WE BEGIN")
-            x = clamp(x - speed);
-            //count = clamp(count - speed);
-        }
-        else if (msg.direction_to_move == 'right') {
-            //console.log("WE BEGIN")
-            x = clamp(x + speed);
-            //count = clamp(count + speed);
-        }
-        $("#avatar").css("margin-left", x);
-        $("#avatar").css("margin-top", y);
-        //console.log("ORIGIN_X: " + origin_x)
     });
     /*
     socket.on('disconnect', function () {

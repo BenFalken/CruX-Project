@@ -1,5 +1,6 @@
 from time import sleep
 from const import *
+from random import randint
 
 import argparse
 import time
@@ -19,7 +20,8 @@ class DataStreamer:
         self.open_file_count = 0
         self.closed_file_count = 0
         # The user's current brain signals
-        self.all_data = []
+        self.all_c3_data = []
+        self.all_c4_data = []
         # The current time, which tells us how to parse out the data into the site
         self.current_time = 0    
         # Simple setup of our board
@@ -42,12 +44,18 @@ class DataStreamer:
     def get_current_data(self):
         try:
             data = self.board.get_board_data(DELAY) # this gets data continiously
-            data_list = [val*SCALE_FACTOR_EEG for val in data[2]]
-            print("SIZE: " + str(len(data_list)))
-            if len(self.all_data) > DATA_CHUNK_SIZE:
-                self.all_data = self.all_data[-1*DATA_CHUNK_SIZE:]
+            c3_data_list = [val*SCALE_FACTOR_EEG for val in data[1]]
+            c4_data_list = [val*SCALE_FACTOR_EEG for val in data[1]]
+            print("C3 CHANNEL DATA SIZE: " + str(len(c3_data_list)))
+            print("C3 CHANNEL DATA SIZE: " + str(len(c4_data_list)))
+            if len(self.all_c3_data) > DATA_CHUNK_SIZE:
+                self.all_c3_data = self.all_c3_data[-1*DATA_CHUNK_SIZE:]
+            if len(self.all_c4_data) > DATA_CHUNK_SIZE:
+                self.all_c4_data = self.all_c4_data[-1*DATA_CHUNK_SIZE:]
         except:
-            data_list = [1 for _ in range(DELAY)]
-        self.all_data.extend(data_list)
+            c3_data_list = [randint(-10, 10) for _ in range(DELAY)]
+            c4_data_list = [randint(-10, 10) for _ in range(DELAY)]
+        self.all_c3_data.extend(c3_data_list)
+        self.all_c4_data.extend(c4_data_list)
         self.current_time += DELAY
-        return data_list
+        return c3_data_list, c4_data_list

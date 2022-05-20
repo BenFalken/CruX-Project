@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.3.0/font/bootstrap-icons.css">
+        <!-- Latest compiled and minified CSS -->
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+        
+        <!-- jQuery library -->
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        
+        <!-- Latest compiled JavaScript -->
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+      
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+        <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+        
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+        <!-- CSS only -->
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+        
+        <!-- JavaScript Bundle with Popper -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+        
+        <!-- Code responsible for loading headers and footers -->
+        <script>
+            $(document).ready(function() {
+                $('#navbar').load('navbar');
+            });
+        </script>
+
+        <script>
+          $(document).ready(function() {
+              $('#footer').load('footer');
+          });
+        </script>
+        <!-- Code responsible for facilitating threading -->
+        <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/1.3.6/socket.io.min.js"></script>
+        <script src="static/js/application2.js"></script>
+    </head>
+    <body>
+        <!--Le navbar-->
+        <div id="navbar"></div>
+
+        <h1>Training Ground</h1>
+        <h2>Train Puffy to move left and right on the screen!</h2>
+        <!--Le graphs-->
+        <div id="graph-wrapper">
+          <!-- EEG graph. visualizes the EEG feed -->
+          <div class="card text-dark bg-light mb-3" style="min-width: 550px; max-width: 550px; max-height: 550px; margin-right: 2em;">
+            <div class="card-header" style="text-align: center;">Your EEG Data</div>
+            <div class="card-body">
+              <div class="graph-container">
+                <canvas id="myChart" width="70%" height="70%" style="margin-left: 0;"></canvas>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Analytics graph. Gives the user their stats -->
+          <div class="card text-dark bg-light mb-3" style="min-width: 550px; max-width: 550px; max-height: 550px;">
+            <div class="card-header" style="text-align: center;">How many of each recording do you have in our database?</div>
+            <div class="card-body">
+              <div class="graph-container">
+                <canvas id="file-count" width="70%" height="70%" style="margin-left: 30px;"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Buttons to dictate which data is collected, and for how long-->
+        <div id="button-container"></div>
+          <div class="button-row">
+            <button id="open-button" class="button-1 left" onclick="start_recording_open()">Train Puffy to Move Left</button>
+            <button id="closed-button" class="button-1 right" onclick="start_recording_closed()">Train Puffy to Move Right</button>
+          </div>
+          <div class="button-row">
+            <button class="button-1 graph-centered" onclick="stop_recording()">Stop Training Puffy</button>
+          </div>
+          <div class="button-row">
+            <button id="create-network-button" class="button-1 graph-centered" onclick="create_network()">Test Puffy's Skills!</button>
+            <!--button id="network-button" class="button-1 right" data-toggle="modal" data-target="#network-modal" onclick="create_network()">Create Network</button-->
+          </div>
+        </div>
+
+        <!--Titles>
+        <h2>About this project</h2>
+        <img class="crux-logo" src="https://firebasestorage.googleapis.com/v0/b/arasi-3c613.appspot.com/o/crux-logo.png?alt=media&token=c4dba220-b039-43f1-b4b3-fb07441332ca">
+        
+        <div class="text-wrapper">
+            <p>
+                Arasi is a project developed by UCLA students, 
+                which ultimately aims to process EEG signals from 
+                users in real time and translate them into digital motion.
+            </p>
+        </div>
+        <div class="text-wrapper">
+            <p>
+                This project employs the following tools: <br>
+                - Flask <br>
+                - Firebase <br>
+                - Keras
+            </p>
+        </div>
+        <div class="text-wrapper">
+            <p>
+                The authors of this project are members of CruX BCI Team 2.
+            </p>
+        </div-->
+
+        <!--Le footer-->
+        <div id="footer"></div>
+    </body>
+</html>

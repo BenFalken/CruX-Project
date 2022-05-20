@@ -34,8 +34,8 @@ class DataClassifier:
 
     # Create an array that will hold all of our necessary data
     def initialize_data_and_labels(self):
-        self.all_data = np.zeros((self.open_file_count + self.closed_file_count, STFT_F_SIZE, STFT_T_SIZE, 1))
-        self.all_labels = np.zeros((self.open_file_count + self.closed_file_count, 1))
+        self.all_data = np.ones((self.open_file_count + self.closed_file_count, STFT_F_SIZE, STFT_T_SIZE, 1))
+        self.all_labels = np.ones((self.open_file_count + self.closed_file_count, 1))
         self.random_indices = np.arange(self.open_file_count + self.closed_file_count)
         np.random.shuffle(self.random_indices)
 
@@ -51,18 +51,28 @@ class DataClassifier:
     # Add data from the database to our classifier
     def load_in_data(self, data, label):
         for signal in data:
-            signal = signal.to_dict()['data']
+            signal_dict = signal.to_dict()
+            signal = signal_dict['data']
+            signal_id = signal_dict['id']
+            channel_type = signal_id.split('_')[2]
+            hash_index = int(signal_id.split('_')[1])
             filtered_signal = self.filter_data(signal)
             if filtered_signal.size < DATA_CHUNK_SIZE:
                 remaining_size = int(DATA_CHUNK_SIZE - filtered_signal.size)
                 filtered_normalized_signal = np.concatenate([filtered_signal, int(filtered_signal[-1])*np.ones((remaining_size))])
             f, t, signal_stft = signal.stft(filtered_normalized_signal, nperseg=196)
             signal_stft = np.abs(signal_stft)
-            for i in range(STFT_F_SIZE):
-                for j in range(STFT_T_SIZE):
-                    self.all_data[self.random_indices[self.count]][i][j][0] = signal_stft[i][j]
-            self.all_labels[self.random_indices[self.count]] = label
-            self.count += 1
+            if label == 1:
+                hash_index += self.open_file_count
+            if channel_type == "c3":
+                for i in range(STFT_F_SIZE):
+                    for j in range(STFT_T_SIZE):
+                        self.all_data[self.random_indices[hash_index]][i][j][0] *= signal_stft[i][j]
+            if channel_type == "c4":
+                for i in range(STFT_F_SIZE):
+                    for j in range(STFT_T_SIZE):
+                        self.all_data[self.random_indices[hash_index]][i][j][0] /= signal_stft[i][j]
+            self.all_labels[self.random_indices[hash_index]] = label
 
     # Verifies, initializes and loads our data and labels
     def build_data(self):
@@ -111,18 +121,22 @@ class DataClassifier:
         self.firebase_comm.save_model(self.model)
 
     # This is used to covert single signals streamed from the headset into a usuable format
-    def convert_signal(self, data):
-        converted_input = np.zeros((1, STFT_F_SIZE, STFT_T_SIZE, 1))
-        data = self.filter_data(data)
-        f, t, data_stft = signal.stft(data, nperseg=196)
-        data_stft = np.abs(data_stft)
+    def convert_signal(self, c3_data, c4_data):
+        converted_input = np.ones((1, STFT_F_SIZE, STFT_T_SIZE, 1))
+        c3_data = self.filter_data(c3_data)
+        c4_data = self.filter_data(c4_data)
+        f, t, c3_data_stft = signal.stft(c3_data, nperseg=196)
+        f, t, c4_data_stft = signal.stft(c4_data, nperseg=196)
+        c3_data_stft = np.abs(c3_data_stft)
+        c4_data_stft = np.abs(c4_data_stft)
         for i in range(STFT_F_SIZE):
             for j in range(STFT_T_SIZE):
-                converted_input[0][i][j][0] = data_stft[i][j]
+                converted_input[0][i][j][0] *= c3_data_stft[i][j]
+                converted_input[0][i][j][0] /= c4_data_stft[i][j]
         return converted_input
 
     # Classifies the signal streamed in from the headset
-    def classify_input(self, data):
+    def classify_input(self, c3_data, c4_data):
         if not self.model_fetched:
             self.firebase_comm.get_model_source()
             self.model_fetched = True
@@ -133,7 +147,7 @@ class DataClassifier:
         input_details = interpreter.get_input_details()
         output_details = interpreter.get_output_details()
         # Get input
-        data = self.convert_signal(data)
+        data = self.convert_signal(c3_data, c4_data)
         # Test model on random input data.
         input_data = np.array(data, dtype=np.float32)
         interpreter.set_tensor(input_details[0]['index'], input_data)

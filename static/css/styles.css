@@ -128,22 +128,39 @@ h6 {
 }
 
 .button-1.left {
-    min-width: 20%;
-    max-width: 20%;
-    left: 25%;
+    left: calc((100vw - 1100px - 30px)/2);
+    min-width: 550px;
+    max-width: 550px;
+    /*
+    left: calc(10% - 1em);
+    min-width: 40%;
+    max-width: 40%;
+    */
 }
 
 .button-1.right {
-    min-width: 20%;
-    max-width: 20%;
-    left: 35%;
+    left: calc(((100vw - 1100px + 30px)/2));
+    min-width: 550px;
+    max-width: 550px;
+    /*
+    left: calc(10% + 1em);
+    min-width: 40%;
+    max-width: 40%;
+    */
 }
 
 .button-1.center {
     background-color: #4c7bea;
-    min-width: calc(50% + 3px);
-    max-width: calc(50% + 3px);
-    left: 25%;
+    margin-left: 10%;
+    min-width: 80%;
+    max-width: 80%;
+}
+
+.button-1.graph-centered {
+    background-color: #4c7bea;
+    left: calc(((100vw - 1130px)/2));
+    min-width: 1130px;
+    max-width: 1130px;
 }
 /*#F082AC;*/
 /*
@@ -179,17 +196,18 @@ h6 {
 */
 
 .crux-logo {
-    min-width: 250px;
-    min-height: 250px;
+    min-width: 300px;
+    min-height: 300px;
 
-    max-width: 250px;
-    max-height: 250px;
+    max-width: 300px;
+    max-height: 300px;
 
     border-radius: 50%;
     border: solid 2px slategray;
+    background-color: skyblue;
 
     position: relative;
-    left: calc(50% - 125px);
+    left: calc(50% - 150px);
 }
 
 .text-wrapper {
@@ -206,11 +224,28 @@ h6 {
 }
 
 #avatar {
-    margin-left: calc(50% - 25px);
-    min-height: 50px;
-    min-width: 50px;
-    max-height: 50px;
-    max-width: 50px;
-    background-color: aquamarine;
-    border: solid 2px slategray;
+    position: absolute;
+    margin-top: 25%;
+    margin-left: 50%;
+    max-height: 12.5vw;
+    min-width: 12.5vw;
+    z-index: 10;
+}
+
+#checkerboard {
+    opacity: 50%;
+    margin: 2.5% 10% 2.5% 10%;
+    min-width:80vw;
+    max-width: 80vw;
+    min-height: calc((108/192)*80vw);
+    max-height: calc((108/192)*80vw);
+    border-radius:1em;
+    border: 2px solid gray;
+    background-image: url("https://firebasestorage.googleapis.com/v0/b/arasi-3c613.appspot.com/o/checkerboard.png?alt=media&token=59210271-e6d2-42c0-aefb-a5eb9f1fba13");
+    background-size: 100% 100%;
+    background-color: rgb(240, 250, 255);
+}
+
+#training-ground {
+    margin-top: 50%;
 }

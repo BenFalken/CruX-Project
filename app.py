@@ -36,6 +36,9 @@ firebase_comm = FirebaseCommunicator()
 # This thingy classifies our data and shit. More info in data_classifier.py
 classifier = DataClassifier(firebase_comm=firebase_comm)
 
+# Keeps track of page
+namespace = '/test'
+
 ## Functions that facilitate data streaming and database interaction ##
 
 # If we have enough data to chunk out and add to our database, let's do so
@@ -43,12 +46,12 @@ def add_data_streamed_at_current_time():
     global streamer, firebase_comm
     # If currently recording open eyes, record into our open eyes category
     if streamer.recording_class == "OPEN":
-        firebase_comm.add_data_to_open_recordings(streamer.open_file_count, streamer.all_data)
+        firebase_comm.add_data_to_open_recordings(streamer.open_file_count, streamer.all_c3_data, streamer.all_c4_data)
         streamer.open_file_count += 1
         firebase_comm.update_open_file_count(streamer.open_file_count)
     # If currently recording closed eyes, record into our closed eyes category
     elif streamer.recording_class == "CLOSED":
-        firebase_comm.add_data_to_closed_recordings(streamer.closed_file_count, streamer.all_data)
+        firebase_comm.add_data_to_closed_recordings(streamer.closed_file_count, streamer.all_c3_data, streamer.all_c4_data)
         streamer.closed_file_count += 1
         firebase_comm.update_closed_file_count(streamer.closed_file_count)
 
@@ -76,14 +79,16 @@ def downsample_data(data):
     return downsampled_data
 
 # Send all necessary info to the main page/graphs
-def send_data(data=[], direction_to_move=''):
+def send_data(c3_data=[], c4_data=[], direction_to_move=''):
+    global namespace
     socketio.emit('new_data', {
-        'data': data,  
+        'c3_data': c3_data,
+        'c3_data': c4_data,  
         'graph_frozen': False, 
         'direction_to_move': direction_to_move,
         'open_file_count': streamer.open_file_count, 
         'closed_file_count': streamer.closed_file_count, 
-        'window_size': WINDOW_SIZE}, namespace='/test')
+        'window_size': WINDOW_SIZE}, namespace=namespace)
 
 # Basically looks at which value is greater in magnitude. We interpret the greater value as a command to move our avatar a certain direction
 def process_prediction(prediction):
@@ -94,27 +99,32 @@ def process_prediction(prediction):
         return "right"
 
 # Decides whether to send data to be stored in our database, or to feed it into a neural network for testing. Then, we send the data to our webpage
-def process_data(data):
-    global streamer, classifier
+def process_data(c3_data=[], c4_data=[]):
+    global streamer, classifier, namespace
     direction_to_move = ''
     if streamer.is_recording_training_data and streamer.current_time > 0 and streamer.current_time % DATA_CHUNK_SIZE == 0:
         add_data_streamed_at_current_time()
     elif streamer.is_streaming_testing_data and streamer.current_time > DATA_CHUNK_SIZE:
-        prediction = classifier.classify_input(streamer.all_data)
+        prediction = classifier.classify_input(streamer.all_c3_data, streamer.all_c4_data)
+        print(prediction)
         direction_to_move = process_prediction(prediction)
-    send_data(data, direction_to_move)
+    send_data(c3_data, c4_data, direction_to_move)
 
 # Our website's bread and butter. Initializes the charts and webpage, then collects data until the page is closed
 def eeg_processor():
     global streamer
     initialize_analytics_chart()
     send_data()
+    send_data()
     while not thread_stop_event.isSet():
         # Collect eeg data
         if streamer.is_recording_training_data or streamer.is_streaming_testing_data:
-            data = streamer.get_current_data()
-            data = downsample_data(data)
-            process_data(data)
+            c3_data, c4_data = streamer.get_current_data()
+            c3_data = downsample_data(c3_data)
+            c4_data = downsample_data(c4_data)
+            process_data(c3_data, c4_data)
+        elif namespace == '/test':
+            process_data()
         socketio.sleep(0.25)    # Necessary time delay
     update_analytics_chart()
     print("The data stream has ended")
@@ -123,9 +133,17 @@ def eeg_processor():
 
 @app.route('/')
 def home():
-    global streamer
+    global streamer, namespace
+    namespace = '/test'
     send_data()
     return render_template('home.html')
+
+@app.route("/training")
+def training():
+    global streamer, namespace
+    namespace = '/training'
+    send_data()
+    return render_template("training.html")
 
 @app.route("/about")
 def about():
@@ -200,7 +218,7 @@ def start_streaming():
 ## Threading functions ##
 
 # Actions to take when the website loads (start thread)
-@socketio.on('connect', namespace='/test')
+@socketio.on('connect')
 def test_connect():
     global thread
     print('Client connected')
@@ -210,7 +228,7 @@ def test_connect():
         thread = socketio.start_background_task(eeg_processor)
 
 # Actions to take when the thread ends
-@socketio.on('disconnect', namespace='/test')
+@socketio.on('disconnect')
 def test_disconnect():
     print('Client disconnected')
 

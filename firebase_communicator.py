@@ -44,11 +44,13 @@ class FirebaseCommunicator:
     def update_closed_file_count(self, file_count):
         self.metadata.document("closed_file_count").update({'count': file_count})
 
-    def add_data_to_open_recordings(self, file_count, data_chunk):
-        self.open_recordings.document("recording_" + str(file_count)).set({'data': data_chunk})
+    def add_data_to_open_recordings(self, file_count, c3_data_chunk, c4_data_chunk):
+        self.open_recordings.document("recording_" + str(file_count) + "_c3").set({'data': c3_data_chunk})
+        self.open_recordings.document("recording_" + str(file_count) + "_c4").set({'data': c4_data_chunk})
 
-    def add_data_to_closed_recordings(self, file_count, data_chunk):
-        self.closed_recordings.document("recording_" + str(file_count)).set({'data': data_chunk})
+    def add_data_to_closed_recordings(self, file_count, c3_data_chunk, c4_data_chunk):
+        self.closed_recordings.document("recording_" + str(file_count) + "_c3").set({'data': c3_data_chunk})
+        self.closed_recordings.document("recording_" + str(file_count) + "_c4").set({'data': c4_data_chunk})
 
     def get_open_file_count(self):
         return self.metadata.document("open_file_count").get().to_dict()['count']
@@ -57,7 +59,11 @@ class FirebaseCommunicator:
         return self.metadata.document("closed_file_count").get().to_dict()['count']
 
     def get_data_from_open_recordings(self, file_count):
-        return self.open_recordings.document("recording_" + str(file_count)).get().to_dict()['data']
+        c3_data = self.open_recordings.document("recording_" + str(file_count) + "_c3").get().to_dict()['data']
+        c4_data = self.open_recordings.document("recording_" + str(file_count) + "_c4").get().to_dict()['data']
+        return c3_data, c4_data
 
     def get_data_from_closed_recordings(self, file_count):
-        return self.closed_recordings.document("recording_" + str(file_count)).get().to_dict()['data']
+        c3_data = self.closed_recordings.document("recording_" + str(file_count) + "_c3").get().to_dict()['data']
+        c4_data = self.closed_recordings.document("recording_" + str(file_count) + "_c4").get().to_dict()['data']
+        return c3_data, c4_data
