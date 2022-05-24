@@ -39,11 +39,8 @@ function start_playing() {
 
 // Resets the play button to on and triggers the stop_streaming function in app.py
 function stop_playing() {
-    // Reset button
     $("#stream-button").css("background-color", '#4c7bea');
-    // Reset
     $.getJSON('/stop_recording',
         function(data) {
-            //do nothing
     });
 }

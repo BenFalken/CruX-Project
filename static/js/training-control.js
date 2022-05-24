@@ -1,8 +1,7 @@
+// Is the graph ready to display data
 let graph_is_ready = false;
 
 $(document).ready(function(){
-    // Is the graph ready to display data
-
     // Initialize the socket.
     var socket = io.connect('http://' + document.domain + ':' + location.port + '/training');
 
@@ -109,11 +108,11 @@ $(document).ready(function(){
       }
 
     // This variable tracks the total amount of data transmitted to the EEG graph. If it exceeds the size of the graph, we remove the oldest data first
-    let i = 0;
+    let data_pts_currently_on_graph = 0;
 
     // Receive details from server
     socket.on('new_data', function(msg) {   
-        // Update char chart
+        // Update analytics chart
         addDataToBar(fileCountChart, msg.left_motion_file_count);
         addDataToBar(fileCountChart, msg.right_motion_file_count);
 
@@ -123,9 +122,9 @@ $(document).ready(function(){
             let WINDOW_SIZE = msg.window_size;
             // Add each bit of data one by one into the graph. If the total data's size exceeds the capped size, remove oldest data
             for (var j = 0; j < msg.c3_data.length; j++) {
-                addData(myChart, i, msg.c3_data[j]);
-                i = i + 1;
-                if (i >= WINDOW_SIZE){
+                addData(myChart, data_pts_currently_on_graph, msg.c3_data[j]);
+                data_pts_currently_on_graph += 1;
+                if (data_pts_currently_on_graph >= WINDOW_SIZE) {
                     removeData(myChart);
                 }            
             }
@@ -133,7 +132,7 @@ $(document).ready(function(){
     });
 });
 
-
+// Resets recording button colors and triggers start_recording_left_motion function in app.py
 function start_recording_left_motion() {
     graph_is_ready = true;
     var color =  $("#record-left-motion-button").css("background-color");
@@ -145,6 +144,7 @@ function start_recording_left_motion() {
     });
 }
 
+// Resets recording button colors and triggers start_recording_right_motion function in app.py
 function start_recording_right_motion() {
     graph_is_ready = true;
     var color =  $("#record-right-motion-button").css("background-color");
@@ -156,43 +156,21 @@ function start_recording_right_motion() {
     });
 }
 
+// Resets recording button colors and triggers create_network function in app.py
 function create_network() {
-    // Replace this with a modal later
     alert("Now processing your data!")
-    // The graph is no longer ready to start collecting and displaying data
     graph_is_ready = false;
-    // Call "create network" function
     $.getJSON('/create_network',
         function(data) {
-            //do nothing
     });
 }
 
+// Resets recording button colors and triggers stop_recording function in app.py
 function stop_recording() {
-    // The graph is no longer ready to start collecting and displaying data
     graph_is_ready = false;
-    // Reset both buttons
     $("#record-left-motion-button").css("background-color", '#ea4c89');
     $("#record-right-motion-button").css("background-color", '#ea4c89');
-    $("#stream-button").css("background-color", '#4c7bea');
-    // Reset
     $.getJSON('/stop_recording',
         function(data) {
-            //do nothing
-    });
-}
-
-function start_streaming() {
-    // The graph is no longer ready to start collecting and displaying data
-    graph_is_ready = true;
-    // Reset both buttons
-    var color =  $("#stream-button").css("background-color");
-    if (color != 'skyblue') {
-        $("#stream-button").css("background-color", 'skyblue');
-    }
-    // Reset
-    $.getJSON('/start_streaming',
-        function(data) {
-            //do nothing
     });
 }
