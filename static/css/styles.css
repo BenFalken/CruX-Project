@@ -181,7 +181,7 @@ h6 {
 }
 
 #checkerboard {
-    opacity: 25%;
+    opacity: 100%;
     margin: 2.5% 10% 2.5% 10%;
     min-width:80vw;
     max-width: 80vw;
@@ -189,12 +189,21 @@ h6 {
     max-height: calc((108/192)*80vw);
     border-radius:1em;
     border: 2px solid gray;
-    background-image: url("https://firebasestorage.googleapis.com/v0/b/arasi-3c613.appspot.com/o/checkerboard.png?alt=media&token=59210271-e6d2-42c0-aefb-a5eb9f1fba13");
+    background-image: url("https://firebasestorage.googleapis.com/v0/b/arasi-3c613.appspot.com/o/terrain.png?alt=media&token=55a12ee5-065d-4b5b-ae41-dab821bca355");
     background-size: 100% 100%;
     background-color: rgb(240, 250, 255);
 }
 
 #avatar {
+    position: absolute;
+    top: calc(10% + 6.5vw + 60px - ((335/500)*3.2vw) + (11*3.2vw));
+    left: calc(10% + 40vw - 3.2vw);
+    min-width: calc(2*(500/242)*3.2vw);
+    max-width: calc(2*(500/242)*3.2vw);
+    min-height: calc(2*(500/242)*3.2vw);
+    max-height: calc(2*(500/242)*3.2vw);
+    z-index: 10;
+    /*
     position: absolute;
     top: calc(10% + 6.5vw + 60px - ((335/500)*3.2vw) + (13*3.2vw));
     left: calc(10% + 40vw - 3.2vw);
@@ -203,8 +212,16 @@ h6 {
     min-height: calc((500/242)*3.2vw);
     max-height: calc((500/242)*3.2vw);
     z-index: 10;
+    */
 }
 
 #training-ground {
     margin-top: 50%;
+}
+
+#sparkle {
+    position: absolute;
+    top: 30%;
+    left: 40%;
+    max-height: 100px;
 }

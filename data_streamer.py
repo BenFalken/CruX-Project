@@ -1,14 +1,6 @@
-from time import sleep
-from const import *
+from brainflow.board_shim import BoardShim, BrainFlowInputParams, BoardIds
 from random import randint
-
-import argparse
-import time
-import numpy as np
-import brainflow
-from brainflow.board_shim import BoardShim, BrainFlowInputParams, LogLevels, BoardIds
-from brainflow.data_filter import DataFilter, FilterTypes, AggOperations
-from pylsl import StreamInfo, StreamOutlet
+from const import *
 
 class DataStreamer:
     def __init__(self):

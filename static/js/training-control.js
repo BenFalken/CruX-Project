@@ -111,13 +111,15 @@ $(document).ready(function(){
     let data_pts_currently_on_graph = 0;
 
     // Receive details from server
-    socket.on('new_data', function(msg) {   
+    socket.on('new_train_data', function(msg) {   
+        console.log("DATA RECEIVED");
         // Update analytics chart
         addDataToBar(fileCountChart, msg.left_motion_file_count);
         addDataToBar(fileCountChart, msg.right_motion_file_count);
 
         // Update the EEG graph
         if (graph_is_ready) {
+            console.log("DATA RECEIVED!");
             // The variable for the data's fixed size is constant but it doesn't matter if we query for it every tick (we can optimize later)
             let WINDOW_SIZE = msg.window_size;
             // Add each bit of data one by one into the graph. If the total data's size exceeds the capped size, remove oldest data

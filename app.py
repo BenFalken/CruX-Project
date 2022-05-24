@@ -2,15 +2,16 @@
 ### BEN IF YOU DELETE THE SHEBANG ONE MORE TIME I'M GONNA GET YOU (I KNOW WHERE YOU SLEEP)
 
 ## Import everything <3 ##
-from flask_socketio import SocketIO, emit
-from flask import Flask, render_template, url_for, copy_current_request_context
-import numpy as np
+from flask_socketio import SocketIO
+from flask import Flask, render_template
 from threading import Thread, Event
 
 from data_streamer import DataStreamer
 from firebase_communicator import FirebaseCommunicator
 from data_classifier import DataClassifier
 from const import *
+
+import numpy as np
 
 ## Initialize some stuff ##
 
@@ -21,7 +22,7 @@ app.config['SECRET_KEY'] = 'secret!'
 app.config['DEBUG'] = True
 
 # Turn the flask app into a socketio app
-socketio = SocketIO(app, async_mode=None, logger=True, engineio_logger=True)
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode=None, logger=True, engineio_logger=True)
 
 # Create thread
 thread = Thread()
@@ -81,14 +82,22 @@ def downsample_data(data):
 # Send all necessary info to the main page/graphs
 def send_data(c3_data=[], c4_data=[], direction_to_move=''):
     global namespace
-    socketio.emit('new_data', {
+    socketio.emit('new_test_data', {
         'c3_data': c3_data,
         'c3_data': c4_data,  
         'graph_frozen': False, 
         'direction_to_move': direction_to_move,
         'left_motion_file_count': streamer.left_motion_file_count, 
         'right_motion_file_count': streamer.right_motion_file_count, 
-        'window_size': WINDOW_SIZE}, namespace=namespace)
+        'window_size': WINDOW_SIZE}, namespace='/test')
+    socketio.emit('new_train_data', {
+        'c3_data': c3_data,
+        'c3_data': c4_data,  
+        'graph_frozen': False, 
+        'direction_to_move': direction_to_move,
+        'left_motion_file_count': streamer.left_motion_file_count, 
+        'right_motion_file_count': streamer.right_motion_file_count, 
+        'window_size': WINDOW_SIZE}, namespace='/training')
 
 # Basically looks at which value is greater in magnitude. We interpret the greater value as a command to move our avatar a certain direction
 def process_prediction(prediction):
@@ -170,7 +179,8 @@ def networkmodal():
 # Set all variables to begin collecting eeg data for left motion
 @app.route('/start_recording_left_motion')
 def start_recording_left_motion():
-    global streamer
+    global streamer, namespace
+    namespace = '/training'
     streamer.is_recording_training_data = True
     streamer.is_streaming_testing_data = False
     streamer.recording_class = "LEFT"
@@ -179,7 +189,8 @@ def start_recording_left_motion():
 # Set all variables to begin collecting eeg data for right motion
 @app.route('/start_recording_right_motion')
 def start_recording_right_motion():
-    global streamer
+    global streamer, namespace
+    namespace = '/training'
     streamer.is_recording_training_data = True
     streamer.is_streaming_testing_data = False
     streamer.recording_class = "RIGHT"
@@ -210,7 +221,8 @@ def create_network():
 # Start streaming data from the headset, with no intention of recording it. Data will be fed into neural network
 @app.route('/start_streaming')
 def start_streaming():
-    global streamer
+    global streamer, namespace
+    namespace = '/test'
     streamer.is_recording_training_data = False
     streamer.is_streaming_testing_data = True
     return "200"

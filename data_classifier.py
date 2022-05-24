@@ -1,10 +1,8 @@
 from scipy import signal
-import numpy as np
-
-from const import *
-
-import tensorflow as tf
 from tensorflow.keras import layers, models
+from const import *
+import numpy as np
+import tensorflow as tf
 
 class DataClassifier:
     def __init__(self, firebase_comm):

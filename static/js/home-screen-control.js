@@ -14,7 +14,7 @@ $(document).ready(function(){
     }
 
     // Receive details from server
-    socket.on('new_data', function(msg) {
+    socket.on('new_test_data', function(msg) {
         // Update the direction of the avatar
         if (msg.direction_to_move == 'left') {
             x = clamp(x - $(window).width()*0.032);
