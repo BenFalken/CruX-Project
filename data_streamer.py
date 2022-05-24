@@ -46,8 +46,7 @@ class DataStreamer:
             data = self.board.get_board_data(DELAY) # this gets data continiously
             c3_data_list = [val*SCALE_FACTOR_EEG for val in data[1]]
             c4_data_list = [val*SCALE_FACTOR_EEG for val in data[1]]
-            print("C3 CHANNEL DATA SIZE: " + str(len(c3_data_list)))
-            print("C3 CHANNEL DATA SIZE: " + str(len(c4_data_list)))
+            
             if len(self.all_c3_data) > DATA_CHUNK_SIZE:
                 self.all_c3_data = self.all_c3_data[-1*DATA_CHUNK_SIZE:]
             if len(self.all_c4_data) > DATA_CHUNK_SIZE:
