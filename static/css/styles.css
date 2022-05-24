@@ -180,18 +180,12 @@ h6 {
     padding-bottom: 1em;
 }
 
-#checkerboard {
-    opacity: 100%;
+#terrain {
     margin: 2.5% 10% 2.5% 10%;
-    min-width:80vw;
-    max-width: 80vw;
-    min-height: calc((108/192)*80vw);
-    max-height: calc((108/192)*80vw);
-    border-radius:1em;
+    max-width: 80%;
+    max-height: calc(80% * 1080 / 1920);
+    border-radius: 1em;
     border: 2px solid gray;
-    background-image: url("https://firebasestorage.googleapis.com/v0/b/arasi-3c613.appspot.com/o/terrain.png?alt=media&token=55a12ee5-065d-4b5b-ae41-dab821bca355");
-    background-size: 100% 100%;
-    background-color: rgb(240, 250, 255);
 }
 
 #avatar {
