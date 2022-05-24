@@ -1,6 +1,11 @@
+import const
+
 from scipy import signal
+<<<<<<< HEAD
 from tensorflow.keras import layers, models
 from const import *
+=======
+>>>>>>> b8eafdc454c6f80b6cde2ba675bd9da91aa0e2c3
 import numpy as np
 import tensorflow as tf
 
@@ -21,20 +26,20 @@ class DataClassifier:
 
     # Checks if our data is balanced enough
     def check_if_data_viable(self):
-        try:
-            file_count_ratio = self.left_motion_file_count/self.right_motion_file_count
-            if file_count_ratio < 0.8 or file_count_ratio > 1.25:
-                print("It is ill advised to create a network with skewed data! Please record more data and try again.")
-                self.viable_data = False
-        except:
-            print("It is ill advised to create a network with skewed data! Please record more data and try again.")
+        file_count_ratio = self.open_file_count / self.closed_file_count
+        if file_count_ratio < 0.8 or file_count_ratio > 1.25:
+            print("It is ill-advised to create a network with skewed data! Please record more data and try again.")
             self.viable_data = False
 
     # Create an array that will hold all of our necessary data
     def initialize_data_and_labels(self):
-        self.all_data = np.ones((self.left_motion_file_count + self.right_motion_file_count, STFT_F_SIZE, STFT_T_SIZE, 1))
-        self.all_labels = np.ones((self.left_motion_file_count + self.right_motion_file_count, 1))
-        self.random_indices = np.arange(self.left_motion_file_count + self.right_motion_file_count)
+        num_images = self.left_motion_file_count + self.right_motion_file_count
+        rows_per_img = STFT_F_SIZE
+        columns_per_img = STFT_T_SIZE
+        self.all_data = np.zeros((num_images, rows_per_img, columns_per_img, 1))
+        self.all_labels = np.zeros((num_images, 1))
+        # Hmmm maybe shuffle data later on? this isn't well encapsulated since random_indices is defined here but only used in another function
+        self.random_indices = np.arange(num_images)
         np.random.shuffle(self.random_indices)
 
     # Le butterworth filter. It filters out the non-important frequencies for us
@@ -43,6 +48,7 @@ class DataClassifier:
         low = MIN_FREQ / nyq
         high = MAX_FREQ / nyq
         b, a = signal.butter(9, [low, high], btype="band")  # Bandpass, which means we select a "band" of frequencies
+        # What are a and b? what do signal.butter and signal.lfilter do?
         filtered = signal.lfilter(b, a, data)
         return filtered
 
@@ -91,6 +97,7 @@ class DataClassifier:
 
     # Makes our keras model
     def make_model(self, input_shape):
+        # What are all these settings??
         self.model = models.Sequential()
         self.model.add(layers.Conv2D(32, (3, 3), activation='relu', input_shape=input_shape))
         self.model.add(layers.MaxPooling2D((2, 2)))
@@ -102,12 +109,15 @@ class DataClassifier:
         self.model.add(layers.Dense(2))
 
     # Takes in the training data (STFT, as an image) and labels. Outputs a trained network
-    def train_network(self, train_images, train_labels):
-        test_images = train_images[20:]
-        test_labels = train_labels[20:]
+    def train_network(self, images, labels):
+        num_images = len(images)
+        assert num_images == len(labels)
 
-        train_images = train_images[:20]
-        train_labels = train_labels[:20]
+        # Split 20% of the data into the test set and the rest into the training set
+        test_images = images[num_images * .2 : ]
+        test_labels = labels[num_images * .2 : ]
+        train_images = images[: num_images * .2]
+        train_labels = labels[: num_images * .2]
 
         self.make_model(input_shape=train_images.shape[1:])
 
@@ -115,7 +125,7 @@ class DataClassifier:
         self.model.fit(train_images, train_labels, epochs=10)
         
         _, accuracy = self.model.evaluate(test_images, test_labels)
-        print("ACCURACY: " + str(accuracy))
+        print(f'ACCURACY: {accuracy}')
 
         self.firebase_comm.save_model(self.model)
 
@@ -140,7 +150,7 @@ class DataClassifier:
             self.firebase_comm.get_model_source()
             self.model_fetched = True
         # Load TFLite model and allocate tensors.
-        interpreter = tf.lite.Interpreter(model_path="arasi_model.tflite")
+        interpreter = tf.lite.Interpreter(model_path = 'arasi_model.tflite')
         interpreter.allocate_tensors()
         # Get input and output tensors.
         input_details = interpreter.get_input_details()

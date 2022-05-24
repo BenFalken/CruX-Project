@@ -13,6 +13,7 @@ git clone https://github.com/BenFalken/CruX-Project.git
 cd CruX-Project
 conda create -n crux-project
 conda activate crux-project
+conda install -c conda-forge liblsl
 pip install -r requirements.txt
 ```
 
