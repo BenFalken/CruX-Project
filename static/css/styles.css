@@ -109,8 +109,6 @@ h6 {
   padding: 10px 16px;
   position: relative;
 
-  /*left: 30%;*/
-
   text-align: center;
   text-decoration: none;
   transition: color 100ms;
@@ -118,9 +116,6 @@ h6 {
   user-select: none;
   -webkit-user-select: none;
   touch-action: manipulation;
-
-  /*min-width: 20%;
-  max-width: 20%;*/
   
   margin-top: 1%;
   margin-bottom: 1%;
@@ -128,68 +123,48 @@ h6 {
 }
 
 .button-1.left {
-    min-width: 20%;
-    max-width: 20%;
-    left: 25%;
+    left: calc((100vw - 1100px - 30px)/2);
+    min-width: 550px;
+    max-width: 550px;
 }
 
 .button-1.right {
-    min-width: 20%;
-    max-width: 20%;
-    left: 35%;
+    left: calc(((100vw - 1100px + 30px)/2));
+    min-width: 550px;
+    max-width: 550px;
 }
 
 .button-1.center {
     background-color: #4c7bea;
-    min-width: calc(50% + 3px);
-    max-width: calc(50% + 3px);
-    left: 25%;
-}
-/*#F082AC;*/
-/*
-.button-1:hover,
-.button-1:focus {
-  background-color: skyblue; 
+    margin-left: 10%;
+    min-width: 80%;
+    max-width: 80%;
 }
 
-.button-1:active {
-    background-color: skyblue;
+.button-1.graph-centered {
+    background-color: #4c7bea;
+    left: calc(((100vw - 1130px)/2));
+    min-width: 1130px;
+    max-width: 1130px;
 }
-
-#open-button:hover,
-#open-button:focus {
-  background-color: skyblue;
-}
-
-#open-button:active {
-    background-color: skyblue;
-}
-*/
 
 .nav-item {
     padding-left: 10%;
 }
 
-/*
-@media (min-width: 1000px) {
-    .graph-container {
-        margin-left: calc(550px - )
-    }
-}
-*/
-
 .crux-logo {
-    min-width: 250px;
-    min-height: 250px;
+    min-width: 300px;
+    min-height: 300px;
 
-    max-width: 250px;
-    max-height: 250px;
+    max-width: 300px;
+    max-height: 300px;
 
     border-radius: 50%;
     border: solid 2px slategray;
+    background-color: skyblue;
 
     position: relative;
-    left: calc(50% - 125px);
+    left: calc(50% - 150px);
 }
 
 .text-wrapper {
@@ -205,12 +180,31 @@ h6 {
     padding-bottom: 1em;
 }
 
+#checkerboard {
+    opacity: 25%;
+    margin: 2.5% 10% 2.5% 10%;
+    min-width:80vw;
+    max-width: 80vw;
+    min-height: calc((108/192)*80vw);
+    max-height: calc((108/192)*80vw);
+    border-radius:1em;
+    border: 2px solid gray;
+    background-image: url("https://firebasestorage.googleapis.com/v0/b/arasi-3c613.appspot.com/o/checkerboard.png?alt=media&token=59210271-e6d2-42c0-aefb-a5eb9f1fba13");
+    background-size: 100% 100%;
+    background-color: rgb(240, 250, 255);
+}
+
 #avatar {
-    margin-left: calc(50% - 25px);
-    min-height: 50px;
-    min-width: 50px;
-    max-height: 50px;
-    max-width: 50px;
-    background-color: aquamarine;
-    border: solid 2px slategray;
+    position: absolute;
+    top: calc(10% + 6.5vw + 60px - ((335/500)*3.2vw) + (13*3.2vw));
+    left: calc(10% + 40vw - 3.2vw);
+    min-width: calc((500/242)*3.2vw);
+    max-width: calc((500/242)*3.2vw);
+    min-height: calc((500/242)*3.2vw);
+    max-height: calc((500/242)*3.2vw);
+    z-index: 10;
+}
+
+#training-ground {
+    margin-top: 50%;
 }

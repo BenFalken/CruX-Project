@@ -15,10 +15,10 @@ class DataClassifier:
         self.viable_data = True
         self.model_fetched = False
 
-    # Fetches the number of files pertaining to eyes open, eyes closed data
+    # Fetches the number of files pertaining to left/right motion data
     def initialize_file_counts(self):
-        self.open_file_count =  self.firebase_comm.get_open_file_count()
-        self.closed_file_count =  self.firebase_comm.get_closed_file_count()
+        self.left_motion_file_count =  self.firebase_comm.get_left_motion_file_count()
+        self.right_motion_file_count =  self.firebase_comm.get_right_motion_file_count()
 
     # Checks if our data is balanced enough
     def check_if_data_viable(self):
@@ -29,7 +29,7 @@ class DataClassifier:
 
     # Create an array that will hold all of our necessary data
     def initialize_data_and_labels(self):
-        num_images = self.open_file_count + self.closed_file_count
+        num_images = self.left_motion_file_count + self.right_motion_file_count
         rows_per_img = STFT_F_SIZE
         columns_per_img = STFT_T_SIZE
         self.all_data = np.zeros((num_images, rows_per_img, columns_per_img, 1))
@@ -48,20 +48,31 @@ class DataClassifier:
         filtered = signal.lfilter(b, a, data)
         return filtered
 
+    def preprocess_signal(self, data):
+        filtered_signal = self.filter_data(signal)
+        if filtered_signal.size < DATA_CHUNK_SIZE:
+            remaining_size = int(DATA_CHUNK_SIZE - filtered_signal.size)
+            filtered_normalized_signal = np.concatenate([filtered_signal, int(filtered_signal[-1])*np.ones((remaining_size))])
+        f, t, signal_stft = signal.stft(filtered_normalized_signal, nperseg=196)
+        signal_stft = np.abs(signal_stft)
+        return signal_stft
+
     # Add data from the database to our classifier
     def load_in_data(self, data, label):
+        self.count = 0
         for signal in data:
-            signal = signal.to_dict()['data']
-            filtered_signal = self.filter_data(signal)
-            if filtered_signal.size < DATA_CHUNK_SIZE:
-                remaining_size = int(DATA_CHUNK_SIZE - filtered_signal.size)
-                filtered_normalized_signal = np.concatenate([filtered_signal, int(filtered_signal[-1])*np.ones((remaining_size))])
-            f, t, signal_stft = signal.stft(filtered_normalized_signal, nperseg=196)
-            signal_stft = np.abs(signal_stft)
+            signal_dict = signal.to_dict()
+            c3_signal = signal_dict['c3_data']
+            c4_signal = signal_dict['c4_data']
+            
+            c3_signal_stft = self.preprocess_signal(c3_signal)
+            c4_signal_stft = self.preprocess_signal(c4_signal)
+
             for i in range(STFT_F_SIZE):
                 for j in range(STFT_T_SIZE):
-                    self.all_data[self.random_indices[self.count]][i][j][0] = signal_stft[i][j]
+                    self.all_data[self.random_indices[self.count]][i][j][0] = (c3_signal_stft[i][j]/c4_signal_stft)
             self.all_labels[self.random_indices[self.count]] = label
+
             self.count += 1
 
     # Verifies, initializes and loads our data and labels
@@ -72,12 +83,12 @@ class DataClassifier:
         if not self.viable_data:
             return None, None
         self.initialize_data_and_labels()
-        # Load in open eyes data
-        open_data = self.firebase_comm.open_recordings.stream()
-        self.load_in_data(data=open_data, label=0)
-        # Load in closed eyes data
-        closed_data = self.firebase_comm.closed_recordings.stream()
-        self.load_in_data(data=closed_data, label=1)
+        # Load in left motion data
+        left_motion_data = self.firebase_comm.left_motion_recordings.stream()
+        self.load_in_data(data=left_motion_data, label=0)
+        # Load in right motion data
+        right_motion_data = self.firebase_comm.right_motion_recordings.stream()
+        self.load_in_data(data=right_motion_data, label=1)
         return self.all_data, self.all_labels
 
     # Makes our keras model
@@ -115,19 +126,22 @@ class DataClassifier:
         self.firebase_comm.save_model(self.model)
 
     # This is used to covert single signals streamed from the headset into a usuable format
-    def convert_signal(self, data):
-        converted_input = np.zeros((1, STFT_F_SIZE, STFT_T_SIZE, 1))
-        data = self.filter_data(data)
-        f, t, data_stft = signal.stft(data, nperseg=196)
-        # What are f and t and nperseg? we shouldn't use a magic number there
-        data_stft = np.abs(data_stft)
+    def convert_signal(self, c3_data, c4_data):
+        converted_input = np.ones((1, STFT_F_SIZE, STFT_T_SIZE, 1))
+        c3_data = self.filter_data(c3_data)
+        c4_data = self.filter_data(c4_data)
+        f, t, c3_data_stft = signal.stft(c3_data, nperseg=196)
+        f, t, c4_data_stft = signal.stft(c4_data, nperseg=196)
+        c3_data_stft = np.abs(c3_data_stft)
+        c4_data_stft = np.abs(c4_data_stft)
         for i in range(STFT_F_SIZE):
             for j in range(STFT_T_SIZE):
-                converted_input[0][i][j][0] = data_stft[i][j]
+                converted_input[0][i][j][0] *= c3_data_stft[i][j]
+                converted_input[0][i][j][0] /= c4_data_stft[i][j]
         return converted_input
 
     # Classifies the signal streamed in from the headset
-    def classify_input(self, data):
+    def classify_input(self, c3_data, c4_data):
         if not self.model_fetched:
             self.firebase_comm.get_model_source()
             self.model_fetched = True
@@ -138,7 +152,7 @@ class DataClassifier:
         input_details = interpreter.get_input_details()
         output_details = interpreter.get_output_details()
         # Get input
-        data = self.convert_signal(data)
+        data = self.convert_signal(c3_data, c4_data)
         # Test model on random input data.
         input_data = np.array(data, dtype=np.float32)
         interpreter.set_tensor(input_details[0]['index'], input_data)

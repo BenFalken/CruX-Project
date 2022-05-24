@@ -3,9 +3,9 @@ STFT_T_SIZE = 99
 STFT_F_SIZE = 99
 
 ## CONSTANTS AND STUFF ##
-WINDOW_SIZE = 100       # How much data we are at in the graph window at once
-DATA_CHUNK_SIZE = 9600  # We chunk the data and upload it to firebase. We do this in time series arrays sized to 1000 vals
-DELAY = 800              # The delay is for the socket to function effectively. It chunks out how much data we get at a time. Without a good enough delay the program lags and breaks
+WINDOW_SIZE = 100
+DATA_CHUNK_SIZE = 9600
+DELAY = 800
 
 # Cutoff frequencies
 MIN_FREQ, MAX_FREQ = 3, 30

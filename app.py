@@ -36,35 +36,38 @@ firebase_comm = FirebaseCommunicator()
 # This thingy classifies our data and shit. More info in data_classifier.py
 classifier = DataClassifier(firebase_comm=firebase_comm)
 
+# Keeps track of page
+namespace = '/test'
+
 ## Functions that facilitate data streaming and database interaction ##
 
 # If we have enough data to chunk out and add to our database, let's do so
 def add_data_streamed_at_current_time():
     global streamer, firebase_comm
-    # If currently recording open eyes, record into our open eyes category
-    if streamer.recording_class == "OPEN":
-        firebase_comm.add_data_to_open_recordings(streamer.open_file_count, streamer.all_data)
-        streamer.open_file_count += 1
-        firebase_comm.update_open_file_count(streamer.open_file_count)
-    # If currently recording closed eyes, record into our closed eyes category
-    elif streamer.recording_class == "CLOSED":
-        firebase_comm.add_data_to_closed_recordings(streamer.closed_file_count, streamer.all_data)
-        streamer.closed_file_count += 1
-        firebase_comm.update_closed_file_count(streamer.closed_file_count)
+    # If currently recording left motion, record into our left motion category
+    if streamer.recording_class == "LEFT":
+        firebase_comm.add_data_to_left_motion_recordings(streamer.left_motion_file_count, streamer.all_c3_data, streamer.all_c4_data)
+        streamer.left_motion_file_count += 1
+        firebase_comm.update_left_motion_file_count(streamer.left_motion_file_count)
+    # If currently recording right motion, record into our right motion category
+    elif streamer.recording_class == "RIGHT":
+        firebase_comm.add_data_to_right_motion_recordings(streamer.right_motion_file_count, streamer.all_c3_data, streamer.all_c4_data)
+        streamer.right_motion_file_count += 1
+        firebase_comm.update_right_motion_file_count(streamer.right_motion_file_count)
 
 def initialize_analytics_chart():
     global streamer, firebase_comm
     # Get the file counts (metadata) just because it's good to display it right off the bat
-    streamer.open_file_count = firebase_comm.get_open_file_count()
-    streamer.closed_file_count = firebase_comm.get_closed_file_count()
+    streamer.left_motion_file_count = firebase_comm.get_left_motion_file_count()
+    streamer.right_motion_file_count = firebase_comm.get_right_motion_file_count()
 
 # Update the count in the analytics chart
 def update_analytics_chart():
     global streamer, firebase_comm
-    if streamer.open_file_count > 0:
-        firebase_comm.update_open_file_count(streamer.open_file_count)
-    if streamer.closed_file_count > 0:
-        firebase_comm.update_closed_file_count(streamer.closed_file_count)
+    if streamer.left_motion_file_count > 0:
+        firebase_comm.update_left_motion_file_count(streamer.left_motion_file_count)
+    if streamer.right_motion_file_count > 0:
+        firebase_comm.update_right_motion_file_count(streamer.right_motion_file_count)
 
 # Downsample our signal for the graph so it's more efficient
 def downsample_data(data):
@@ -76,14 +79,16 @@ def downsample_data(data):
     return downsampled_data
 
 # Send all necessary info to the main page/graphs
-def send_data(data=[], direction_to_move=''):
+def send_data(c3_data=[], c4_data=[], direction_to_move=''):
+    global namespace
     socketio.emit('new_data', {
-        'data': data,  
+        'c3_data': c3_data,
+        'c3_data': c4_data,  
         'graph_frozen': False, 
         'direction_to_move': direction_to_move,
-        'open_file_count': streamer.open_file_count, 
-        'closed_file_count': streamer.closed_file_count, 
-        'window_size': WINDOW_SIZE}, namespace='/test')
+        'left_motion_file_count': streamer.left_motion_file_count, 
+        'right_motion_file_count': streamer.right_motion_file_count, 
+        'window_size': WINDOW_SIZE}, namespace=namespace)
 
 # Basically looks at which value is greater in magnitude. We interpret the greater value as a command to move our avatar a certain direction
 def process_prediction(prediction):
@@ -94,27 +99,32 @@ def process_prediction(prediction):
         return "right"
 
 # Decides whether to send data to be stored in our database, or to feed it into a neural network for testing. Then, we send the data to our webpage
-def process_data(data):
-    global streamer, classifier
+def process_data(c3_data=[], c4_data=[]):
+    global streamer, classifier, namespace
     direction_to_move = ''
     if streamer.is_recording_training_data and streamer.current_time > 0 and streamer.current_time % DATA_CHUNK_SIZE == 0:
         add_data_streamed_at_current_time()
     elif streamer.is_streaming_testing_data and streamer.current_time > DATA_CHUNK_SIZE:
-        prediction = classifier.classify_input(streamer.all_data)
+        prediction = classifier.classify_input(streamer.all_c3_data, streamer.all_c4_data)
+        print(prediction)
         direction_to_move = process_prediction(prediction)
-    send_data(data, direction_to_move)
+    send_data(c3_data, c4_data, direction_to_move)
 
 # Our website's bread and butter. Initializes the charts and webpage, then collects data until the page is closed
 def eeg_processor():
     global streamer
     initialize_analytics_chart()
     send_data()
+    send_data()
     while not thread_stop_event.isSet():
         # Collect eeg data
         if streamer.is_recording_training_data or streamer.is_streaming_testing_data:
-            data = streamer.get_current_data()
-            data = downsample_data(data)
-            process_data(data)
+            c3_data, c4_data = streamer.get_current_data()
+            c3_data = downsample_data(c3_data)
+            c4_data = downsample_data(c4_data)
+            process_data(c3_data, c4_data)
+        elif namespace == '/test':
+            process_data()
         socketio.sleep(0.25)    # Necessary time delay
     update_analytics_chart()
     print("The data stream has ended")
@@ -123,9 +133,17 @@ def eeg_processor():
 
 @app.route('/')
 def home():
-    global streamer
+    global streamer, namespace
+    namespace = '/test'
     send_data()
     return render_template('home.html')
+
+@app.route("/training")
+def training():
+    global streamer, namespace
+    namespace = '/training'
+    send_data()
+    return render_template("training.html")
 
 @app.route("/about")
 def about():
@@ -149,22 +167,22 @@ def networkmodal():
 
 ## Button-triggered functions ##
 
-# Set all variables to begin collecting eeg data for open eyes
-@app.route('/start_recording_open')
-def start_recording_open():
+# Set all variables to begin collecting eeg data for left motion
+@app.route('/start_recording_left_motion')
+def start_recording_left_motion():
     global streamer
     streamer.is_recording_training_data = True
     streamer.is_streaming_testing_data = False
-    streamer.recording_class = "OPEN"
+    streamer.recording_class = "LEFT"
     return "200"
 
-# Set all variables to begin collecting eeg data for closed eyes
-@app.route('/start_recording_closed')
-def start_recording_closed():
+# Set all variables to begin collecting eeg data for right motion
+@app.route('/start_recording_right_motion')
+def start_recording_right_motion():
     global streamer
     streamer.is_recording_training_data = True
     streamer.is_streaming_testing_data = False
-    streamer.recording_class = "CLOSED"
+    streamer.recording_class = "RIGHT"
     return "200"
 
 # Don't record from any recording class, and don't stream any data
@@ -200,7 +218,7 @@ def start_streaming():
 ## Threading functions ##
 
 # Actions to take when the website loads (start thread)
-@socketio.on('connect', namespace='/test')
+@socketio.on('connect')
 def test_connect():
     global thread
     print('Client connected')
@@ -210,7 +228,7 @@ def test_connect():
         thread = socketio.start_background_task(eeg_processor)
 
 # Actions to take when the thread ends
-@socketio.on('disconnect', namespace='/test')
+@socketio.on('disconnect')
 def test_disconnect():
     print('Client disconnected')
 
