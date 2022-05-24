@@ -1,6 +1,7 @@
+let graph_is_ready = false;
+
 $(document).ready(function(){
     // Is the graph ready to display data
-    let graph_is_ready = false;
 
     // Initialize the socket.
     var socket = io.connect('http://' + document.domain + ':' + location.port + '/training');
