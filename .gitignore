@@ -5,4 +5,4 @@ np
 pkl
 tf
 *.tflite
-.DS_Store
+*.DS_Store
