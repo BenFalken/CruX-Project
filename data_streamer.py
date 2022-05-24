@@ -16,9 +16,9 @@ class DataStreamer:
         self.is_recording_training_data = False
         self.is_streaming_testing_data = False
         self.recording_class = "OFF" # At the outset, we are not recording for any state of mind; the system is off
-        # Tracks how many files we have stored in our database for eyes open, eyes closed data
-        self.open_file_count = 0
-        self.closed_file_count = 0
+        # Tracks how many files we have stored in our database for left/right motion data
+        self.left_motion_file_count = 0
+        self.right_motion_file_count = 0
         # The user's current brain signals
         self.all_c3_data = []
         self.all_c4_data = []

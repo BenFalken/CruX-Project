@@ -11,8 +11,8 @@ class FirebaseCommunicator:
         })
         db = firestore.client()
         # All the database collections we reference
-        self.open_recordings = db.collection('open_recordings')
-        self.closed_recordings = db.collection('closed_recordings')
+        self.left_motion_recordings = db.collection('left_motion_recordings')
+        self.right_motion_recordings = db.collection('right_motion_recordings')
         self.metadata = db.collection('metadata')
 
     # Saves a keras model into firebase ml, so it can be used later
@@ -38,32 +38,30 @@ class FirebaseCommunicator:
     
     # I really really really don't wanna define these fucking functions. It's just getters and setters anyway
 
-    def update_open_file_count(self, file_count):
-        self.metadata.document("open_file_count").update({'count': file_count})
+    def update_left_motion_file_count(self, file_count):
+        self.metadata.document("left_motion_file_count").update({'count': file_count})
 
-    def update_closed_file_count(self, file_count):
-        self.metadata.document("closed_file_count").update({'count': file_count})
+    def update_right_motion_file_count(self, file_count):
+        self.metadata.document("right_motion_file_count").update({'count': file_count})
 
-    def add_data_to_open_recordings(self, file_count, c3_data_chunk, c4_data_chunk):
-        self.open_recordings.document("recording_" + str(file_count) + "_c3").set({'data': c3_data_chunk})
-        self.open_recordings.document("recording_" + str(file_count) + "_c4").set({'data': c4_data_chunk})
+    def add_data_to_left_motion_recordings(self, file_count, c3_data_chunk, c4_data_chunk):
+        self.left_motion_recordings.document("recording_" + str(file_count)).set({'c3_data': c3_data_chunk, 'c4_data': c4_data_chunk})
 
-    def add_data_to_closed_recordings(self, file_count, c3_data_chunk, c4_data_chunk):
-        self.closed_recordings.document("recording_" + str(file_count) + "_c3").set({'data': c3_data_chunk})
-        self.closed_recordings.document("recording_" + str(file_count) + "_c4").set({'data': c4_data_chunk})
+    def add_data_to_right_motion_recordings(self, file_count, c3_data_chunk, c4_data_chunk):
+        self.right_motion_recordings.document("recording_" + str(file_count)).set({'c3_data': c3_data_chunk, 'c4_data': c4_data_chunk})
 
-    def get_open_file_count(self):
-        return self.metadata.document("open_file_count").get().to_dict()['count']
+    def get_left_motion_file_count(self):
+        return self.metadata.document("left_motion_file_count").get().to_dict()['count']
 
-    def get_closed_file_count(self):
-        return self.metadata.document("closed_file_count").get().to_dict()['count']
+    def get_right_motion_file_count(self):
+        return self.metadata.document("right_motion_file_count").get().to_dict()['count']
 
-    def get_data_from_open_recordings(self, file_count):
-        c3_data = self.open_recordings.document("recording_" + str(file_count) + "_c3").get().to_dict()['data']
-        c4_data = self.open_recordings.document("recording_" + str(file_count) + "_c4").get().to_dict()['data']
+    def get_data_from_left_motion_recordings(self, file_count):
+        c3_data = self.left_motion_recordings.document("recording_" + str(file_count)).get().to_dict()['c3_data']
+        c4_data = self.left_motion_recordings.document("recording_" + str(file_count)).get().to_dict()['c4_data']
         return c3_data, c4_data
 
-    def get_data_from_closed_recordings(self, file_count):
-        c3_data = self.closed_recordings.document("recording_" + str(file_count) + "_c3").get().to_dict()['data']
-        c4_data = self.closed_recordings.document("recording_" + str(file_count) + "_c4").get().to_dict()['data']
+    def get_data_from_right_motion_recordings(self, file_count):
+        c3_data = self.right_motion_recordings.document("recording_" + str(file_count)).get().to_dict()['c3_data']
+        c4_data = self.right_motion_recordings.document("recording_" + str(file_count)).get().to_dict()['c4_data']
         return c3_data, c4_data

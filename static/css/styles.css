@@ -109,8 +109,6 @@ h6 {
   padding: 10px 16px;
   position: relative;
 
-  /*left: 30%;*/
-
   text-align: center;
   text-decoration: none;
   transition: color 100ms;
@@ -118,9 +116,6 @@ h6 {
   user-select: none;
   -webkit-user-select: none;
   touch-action: manipulation;
-
-  /*min-width: 20%;
-  max-width: 20%;*/
   
   margin-top: 1%;
   margin-bottom: 1%;
@@ -131,22 +126,12 @@ h6 {
     left: calc((100vw - 1100px - 30px)/2);
     min-width: 550px;
     max-width: 550px;
-    /*
-    left: calc(10% - 1em);
-    min-width: 40%;
-    max-width: 40%;
-    */
 }
 
 .button-1.right {
     left: calc(((100vw - 1100px + 30px)/2));
     min-width: 550px;
     max-width: 550px;
-    /*
-    left: calc(10% + 1em);
-    min-width: 40%;
-    max-width: 40%;
-    */
 }
 
 .button-1.center {
@@ -162,38 +147,10 @@ h6 {
     min-width: 1130px;
     max-width: 1130px;
 }
-/*#F082AC;*/
-/*
-.button-1:hover,
-.button-1:focus {
-  background-color: skyblue; 
-}
-
-.button-1:active {
-    background-color: skyblue;
-}
-
-#open-button:hover,
-#open-button:focus {
-  background-color: skyblue;
-}
-
-#open-button:active {
-    background-color: skyblue;
-}
-*/
 
 .nav-item {
     padding-left: 10%;
 }
-
-/*
-@media (min-width: 1000px) {
-    .graph-container {
-        margin-left: calc(550px - )
-    }
-}
-*/
 
 .crux-logo {
     min-width: 300px;

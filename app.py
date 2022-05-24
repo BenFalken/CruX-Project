@@ -44,30 +44,30 @@ namespace = '/test'
 # If we have enough data to chunk out and add to our database, let's do so
 def add_data_streamed_at_current_time():
     global streamer, firebase_comm
-    # If currently recording open eyes, record into our open eyes category
-    if streamer.recording_class == "OPEN":
-        firebase_comm.add_data_to_open_recordings(streamer.open_file_count, streamer.all_c3_data, streamer.all_c4_data)
-        streamer.open_file_count += 1
-        firebase_comm.update_open_file_count(streamer.open_file_count)
-    # If currently recording closed eyes, record into our closed eyes category
-    elif streamer.recording_class == "CLOSED":
-        firebase_comm.add_data_to_closed_recordings(streamer.closed_file_count, streamer.all_c3_data, streamer.all_c4_data)
-        streamer.closed_file_count += 1
-        firebase_comm.update_closed_file_count(streamer.closed_file_count)
+    # If currently recording left motion, record into our left motion category
+    if streamer.recording_class == "LEFT":
+        firebase_comm.add_data_to_left_motion_recordings(streamer.left_motion_file_count, streamer.all_c3_data, streamer.all_c4_data)
+        streamer.left_motion_file_count += 1
+        firebase_comm.update_left_motion_file_count(streamer.left_motion_file_count)
+    # If currently recording right motion, record into our right motion category
+    elif streamer.recording_class == "RIGHT":
+        firebase_comm.add_data_to_right_motion_recordings(streamer.right_motion_file_count, streamer.all_c3_data, streamer.all_c4_data)
+        streamer.right_motion_file_count += 1
+        firebase_comm.update_right_motion_file_count(streamer.right_motion_file_count)
 
 def initialize_analytics_chart():
     global streamer, firebase_comm
     # Get the file counts (metadata) just because it's good to display it right off the bat
-    streamer.open_file_count = firebase_comm.get_open_file_count()
-    streamer.closed_file_count = firebase_comm.get_closed_file_count()
+    streamer.left_motion_file_count = firebase_comm.get_left_motion_file_count()
+    streamer.right_motion_file_count = firebase_comm.get_right_motion_file_count()
 
 # Update the count in the analytics chart
 def update_analytics_chart():
     global streamer, firebase_comm
-    if streamer.open_file_count > 0:
-        firebase_comm.update_open_file_count(streamer.open_file_count)
-    if streamer.closed_file_count > 0:
-        firebase_comm.update_closed_file_count(streamer.closed_file_count)
+    if streamer.left_motion_file_count > 0:
+        firebase_comm.update_left_motion_file_count(streamer.left_motion_file_count)
+    if streamer.right_motion_file_count > 0:
+        firebase_comm.update_right_motion_file_count(streamer.right_motion_file_count)
 
 # Downsample our signal for the graph so it's more efficient
 def downsample_data(data):
@@ -86,8 +86,8 @@ def send_data(c3_data=[], c4_data=[], direction_to_move=''):
         'c3_data': c4_data,  
         'graph_frozen': False, 
         'direction_to_move': direction_to_move,
-        'open_file_count': streamer.open_file_count, 
-        'closed_file_count': streamer.closed_file_count, 
+        'left_motion_file_count': streamer.left_motion_file_count, 
+        'right_motion_file_count': streamer.right_motion_file_count, 
         'window_size': WINDOW_SIZE}, namespace=namespace)
 
 # Basically looks at which value is greater in magnitude. We interpret the greater value as a command to move our avatar a certain direction
@@ -167,22 +167,22 @@ def networkmodal():
 
 ## Button-triggered functions ##
 
-# Set all variables to begin collecting eeg data for open eyes
-@app.route('/start_recording_open')
-def start_recording_open():
+# Set all variables to begin collecting eeg data for left motion
+@app.route('/start_recording_left_motion')
+def start_recording_left_motion():
     global streamer
     streamer.is_recording_training_data = True
     streamer.is_streaming_testing_data = False
-    streamer.recording_class = "OPEN"
+    streamer.recording_class = "LEFT"
     return "200"
 
-# Set all variables to begin collecting eeg data for closed eyes
-@app.route('/start_recording_closed')
-def start_recording_closed():
+# Set all variables to begin collecting eeg data for right motion
+@app.route('/start_recording_right_motion')
+def start_recording_right_motion():
     global streamer
     streamer.is_recording_training_data = True
     streamer.is_streaming_testing_data = False
-    streamer.recording_class = "CLOSED"
+    streamer.recording_class = "RIGHT"
     return "200"
 
 # Don't record from any recording class, and don't stream any data

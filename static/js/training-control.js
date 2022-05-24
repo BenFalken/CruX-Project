@@ -1,30 +1,22 @@
-// This boolean determines whether or not we are ready to read the data being sent from app.py
-let graph_is_ready = false;
-var direction_to_move = '';
-
 $(document).ready(function(){
-    //$("#create-network-button").css("visibility", "hidden");
-    // These variables will eventually be used for the avatar being moved. It has the ID "resting"
-    let displacement_x = $( window ).width()/2;
-    let displacement_y = 100;
+    // Is the graph ready to display data
+    let graph_is_ready = false;
 
     // Initialize the socket.
     var socket = io.connect('http://' + document.domain + ':' + location.port + '/training');
-    var data_received = [];
 
     // This is how we interact with the two charts in our home page
     var ctx = document.getElementById('myChart');
     var ctx_bar = document.getElementById('file-count');
     
-    // Our EEG chart. Details on the graph:
     /*
-    * No legend to annotate data
-    * No animation every time to graph reloads
-    * No ticks on the x or y axis
-    * Y axis is clamped between +/-0.0001
+    * Our EEG chart. Details on the graph:
+    ** No legend to annotate data
+    ** No animation every time to graph reloads
+    ** No ticks on the x or y axis
+    ** Y axis is clamped between +/-0.0001
     */
 
-    //NOTE: y range used to be +/- 0.0001
     var myChart = new Chart(ctx, {
         type: 'line',
         data: {
@@ -54,14 +46,15 @@ $(document).ready(function(){
         }
     });
 
-    // Our EEG chart. Details on the graph:
     /*
-    * Two bins for data (eyes open, eyes closed)
-    * No legend to annotate data
-    * No animation every time to graph reloads
-    * No ticks on the y axis
-    * Y axis fixed at 0
+    * Our analytics chart. Details on the graph:
+    ** Two bins for data (left/right motion)
+    ** No legend to annotate data
+    ** No animation every time to graph reloads
+    ** No ticks on the y axis
+    ** Y axis fixed at 0
     */
+
     var fileCountChart = new Chart(ctx_bar, {
         type: 'bar',
         data: {
@@ -86,13 +79,6 @@ $(document).ready(function(){
             }
         }
     })
-
-    // This function makes sure our avatar does not exceed the bounds on the window, lengthwise
-    function clamp(val) {
-        var max = $( window ).width() - div_width;
-        var min = 0;
-        return Math.min(Math.max(val, min), max);
-    }
 
     // This function appends new data to a chart
     function addData(chart, label, data) {
@@ -124,26 +110,16 @@ $(document).ready(function(){
     // This variable tracks the total amount of data transmitted to the EEG graph. If it exceeds the size of the graph, we remove the oldest data first
     let i = 0;
 
-    //receive details from server
-    socket.on('new_data', function(msg) {
-
-        console.log("RECIEVED DATA 2");
-
-        // Ignore this. I'm not exactly sure why this is still here
-        $("#file-count").text(msg.open_file_count.toString() + " " + msg.closed_file_count.toString());
-
-        // Update the direction of the avatar
-        direction_to_move = msg.direction_to_move;
-        
+    // Receive details from server
+    socket.on('new_data', function(msg) {   
         // Update char chart
-        addDataToBar(fileCountChart, msg.open_file_count);
-        addDataToBar(fileCountChart, msg.closed_file_count);
+        addDataToBar(fileCountChart, msg.left_motion_file_count);
+        addDataToBar(fileCountChart, msg.right_motion_file_count);
 
         // Update the EEG graph
         if (graph_is_ready) {
             // The variable for the data's fixed size is constant but it doesn't matter if we query for it every tick (we can optimize later)
             let WINDOW_SIZE = msg.window_size;
-
             // Add each bit of data one by one into the graph. If the total data's size exceeds the capped size, remove oldest data
             for (var j = 0; j < msg.c3_data.length; j++) {
                 addData(myChart, i, msg.c3_data[j]);
@@ -154,50 +130,34 @@ $(document).ready(function(){
             }
         }
     });
-    /*
-    socket.on('disconnect', function () {
-        setTimeout(function () {
-             //do something
-        }, 10000);
-    });
-    */
 });
 
 
-function start_recording_open() {
-    // The graph is ready to start collecting and displaying data
+function start_recording_left_motion() {
     graph_is_ready = true;
-    // Change the button color to indicate it has been pressed
-    var color =  $("#open-button").css("background-color");
+    var color =  $("#record-left-motion-button").css("background-color");
     if (color != 'skyblue') {
-        $("#open-button").css("background-color", 'skyblue');
+        $("#record-left-motion-button").css("background-color", 'skyblue');
     }
-    // Call "start recording open" function
-    $.getJSON('/start_recording_open',
+    $.getJSON('/start_recording_left_motion',
         function(data) {
-            //do nothing
     });
 }
 
-function start_recording_closed() {
-    // The graph is ready to start collecting and displaying data
+function start_recording_right_motion() {
     graph_is_ready = true;
-    // Change the button color to indicate it has been pressed
-    var color =  $("#closed-button").css("background-color");
+    var color =  $("#record-right-motion-button").css("background-color");
     if (color != 'skyblue') {
-        $("#closed-button").css("background-color", 'skyblue');
+        $("#record-right-motion-button").css("background-color", 'skyblue');
     }
-    // Call "start recording closed" function
-    $.getJSON('/start_recording_closed',
+    $.getJSON('/start_recording_right_motion',
         function(data) {
-            //do nothing
     });
 }
 
 function create_network() {
     // Replace this with a modal later
     alert("Now processing your data!")
-    console.log("CREATED NETWORK");
     // The graph is no longer ready to start collecting and displaying data
     graph_is_ready = false;
     // Call "create network" function
@@ -211,8 +171,8 @@ function stop_recording() {
     // The graph is no longer ready to start collecting and displaying data
     graph_is_ready = false;
     // Reset both buttons
-    $("#open-button").css("background-color", '#ea4c89');
-    $("#closed-button").css("background-color", '#ea4c89');
+    $("#record-left-motion-button").css("background-color", '#ea4c89');
+    $("#record-right-motion-button").css("background-color", '#ea4c89');
     $("#stream-button").css("background-color", '#4c7bea');
     // Reset
     $.getJSON('/stop_recording',
