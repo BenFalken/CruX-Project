@@ -189,7 +189,7 @@ h6 {
     max-height: calc((108/192)*80vw);
     border-radius:1em;
     border: 2px solid gray;
-    background-image: url("/images/terrain.png");
+    background-image: url("https://firebasestorage.googleapis.com/v0/b/arasi-3c613.appspot.com/o/terrain.png?alt=media&token=55a12ee5-065d-4b5b-ae41-dab821bca355");
     background-size: 100% 100%;
     background-color: rgb(240, 250, 255);
 }
