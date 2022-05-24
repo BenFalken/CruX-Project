@@ -1,11 +1,6 @@
-import const
-
 from scipy import signal
-<<<<<<< HEAD
 from tensorflow.keras import layers, models
 from const import *
-=======
->>>>>>> b8eafdc454c6f80b6cde2ba675bd9da91aa0e2c3
 import numpy as np
 import tensorflow as tf
 
