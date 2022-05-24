@@ -8,10 +8,10 @@ $(document).ready(function(){
     let displacement_x = $( window ).width()/2;
     let displacement_y = 100;
 
-    let origin_left = $("#avatar").css("margin-left");
+    let origin_left = $("#avatar").css("left");
     origin_left = parseInt(origin_left.slice(0, -2));
 
-    let origin_top = $("#avatar").css("margin-top");
+    let origin_top = $("#avatar").css("top");
     origin_top = parseInt(origin_top.slice(0, -2));
 
     let x = origin_left;
@@ -106,8 +106,8 @@ $(document).ready(function(){
     */
     // This function makes sure our avatar does not exceed the bounds on the window, lengthwise
     function clamp(val) {
-        var max = $( window ).width() - div_width;
-        var min = 0;
+        var max = $(window).width()*(0.9 - 0.048);
+        var min = $(window).width()*(0.1 - 0.016);
         return Math.min(Math.max(val, min), max);
     }
     /*
@@ -193,16 +193,16 @@ $(document).ready(function(){
         */
         if (msg.direction_to_move == 'left') {
             //console.log("WE BEGIN")
-            x = clamp(x - speed);
+            x = clamp(x + $(window).width()*0.032);
             //count = clamp(count - speed);
         }
         else if (msg.direction_to_move == 'right') {
             //console.log("WE BEGIN")
-            x = clamp(x + speed);
+            x = clamp(x + $(window).width()*0.32);
             //count = clamp(count + speed);
         }
-        $("#avatar").css("margin-left", x);
-        $("#avatar").css("margin-top", y);
+        $("#avatar").css("left", x);
+        $("#avatar").css("top", y);
         //console.log("ORIGIN_X: " + origin_x)
     });
     /*

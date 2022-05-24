@@ -223,17 +223,8 @@ h6 {
     padding-bottom: 1em;
 }
 
-#avatar {
-    position: absolute;
-    margin-top: 25%;
-    margin-left: 50%;
-    max-height: 12.5vw;
-    min-width: 12.5vw;
-    z-index: 10;
-}
-
 #checkerboard {
-    opacity: 50%;
+    opacity: 25%;
     margin: 2.5% 10% 2.5% 10%;
     min-width:80vw;
     max-width: 80vw;
@@ -244,6 +235,17 @@ h6 {
     background-image: url("https://firebasestorage.googleapis.com/v0/b/arasi-3c613.appspot.com/o/checkerboard.png?alt=media&token=59210271-e6d2-42c0-aefb-a5eb9f1fba13");
     background-size: 100% 100%;
     background-color: rgb(240, 250, 255);
+}
+
+#avatar {
+    position: absolute;
+    top: calc(10% + 6.5vw + 60px - ((335/500)*3.2vw) + (13*3.2vw));
+    left: calc(10% + 40vw - 3.2vw);
+    min-width: calc((500/242)*3.2vw);
+    max-width: calc((500/242)*3.2vw);
+    min-height: calc((500/242)*3.2vw);
+    max-height: calc((500/242)*3.2vw);
+    z-index: 10;
 }
 
 #training-ground {
