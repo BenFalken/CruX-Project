@@ -75,8 +75,11 @@ def downsample_data(data):
     downsampled_data = []
     samples = 10
     step_size = int(len(data)/samples)
-    for i in range(0, len(data), step_size):
-        downsampled_data.append(data[i])
+    try:
+        for i in range(0, len(data), step_size):
+            downsampled_data.append(data[i])
+    except:
+        return downsampled_data
     return downsampled_data
 
 # Send all necessary info to the main page/graphs
