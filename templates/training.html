@@ -42,6 +42,26 @@
         <!--Le navbar-->
         <div id="navbar"></div>
 
+        <!-- Modal -->
+        <div class="modal fade" id="network-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+          <div class="modal-dialog" role="document">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h2 class="modal-title" id="exampleModalLabel">Training Puffy!</h2>
+                <!--button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button-->
+              </div>
+              <div class="modal-body">
+                <img id="modal-img" src="https://firebasestorage.googleapis.com/v0/b/arasi-3c613.appspot.com/o/smoothbrain.gif?alt=media&token=f6e30ec5-4c8c-485f-8b36-0f229e2513c3">
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Return to site</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <h1>Training Ground</h1>
         <h2>Train Puffy to move left and right on the screen!</h2>
 
@@ -78,7 +98,7 @@
             <button class="button-1 graph-centered" onclick="stop_recording()">Stop Training Puffy</button>
           </div>
           <div class="button-row">
-            <button id="create-network-button" class="button-1 graph-centered" onclick="create_network()">Test Puffy's Skills!</button>
+            <button type="button" id="create-network-button" class="button-1 graph-centered" data-toggle="modal" data-target="#network-modal">Test Puffy's Skills!</button>
           </div>
         </div>
         
