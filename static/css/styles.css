@@ -212,6 +212,6 @@ h6 {
     max-width: 60%;
     margin-left: 20%;
     border-radius: 50%;
-    background-image: url("https://firebasestorage.googleapis.com/v0/b/arasi-3c613.appspot.com/o/binary.gif?alt=media&token=244efde0-624e-452d-9c8a-f900fd464794");
+    background-image: url("/static/images/binary.gif");
     border: 4px solid lightgrey;
 }
