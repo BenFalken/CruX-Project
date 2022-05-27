@@ -180,10 +180,10 @@ h6 {
     padding-bottom: 1em;
 }
 
-#terrain {
+#game-canvas {
     margin: 2.5% 10% 2.5% 10%;
-    max-width: 80%;
-    max-height: calc(80% * 1080 / 1920);
+    width: 80%;
+    height: calc(80% * 1080 / 1920);
     border-radius: 1em;
     border: 2px solid gray;
 }
