@@ -53,11 +53,6 @@ class SmoothBrain {
         // the .8 in this next line is there is a fudge factor to account for the large transparent padding in the image files
         var canvas_y_coord = canvas.height * (1 - this.y) - this.height_in_pixels * .8;
         ctx.drawImage(this.frames[frame_number], canvas_x_coord, canvas_y_coord, this.width_in_pixels, this.height_in_pixels);
-        ctx.beginPath();
-        ctx.arc(canvas_x_coord + this.width_in_pixels / 2,
-                canvas_y_coord + this.height_in_pixels / 2,
-                canvas.width * .03, 0, 2 * Math.PI);
-        ctx.stroke();
     }
 }
 
@@ -70,7 +65,7 @@ class Sparkle {
         }
         this.width_in_pixels = canvas.width / 8;
         this.height_in_pixels = canvas.width / 8;
-        this.fall_speed = .002 + .001 * Math.random();
+        this.fall_speed = .002 + .002 * Math.random();
         this.frame_offset = Math.floor(Math.random() * 16);
         this.x = (Math.random() * (canvas.width - this.width_in_pixels) + this.width_in_pixels / 2) / canvas.width;
         this.y = 1;
@@ -80,9 +75,15 @@ class Sparkle {
     }
     touching_puffy() {
         var x_distance_to_puffy = this.x - puffy.x + .0005;
-        var y_distance_to_puffy = this.y - puffy.y + .03;
+        var y_distance_to_puffy = (this.y - puffy.y + .03) * canvas.height / canvas.width;
         var distance_to_puffy = Math.sqrt(x_distance_to_puffy * x_distance_to_puffy + y_distance_to_puffy * y_distance_to_puffy);
-        return distance_to_puffy <= .05;
+        if (distance_to_puffy <= .05) {
+            // sparkle is near puffy, bring it closer so that the animation is satisfying
+            // (instead of just making the sparkle disappear when it gets close)
+            this.x += (puffy.x - this.x) * .1;
+            this.y += (puffy.y - this.y) * .1;
+        }
+        return distance_to_puffy <= .03;
     }
     draw(timestamp) {
         // smoothbrain.gif has sixteen frames that each last for 70 milliseconds
@@ -91,11 +92,6 @@ class Sparkle {
         var canvas_x_coord = canvas.width  * this.x - this.width_in_pixels / 2;
         var canvas_y_coord = canvas.height * (1 - this.y) - this.height_in_pixels;
         ctx.drawImage(this.frames[frame_number], canvas_x_coord, canvas_y_coord, this.width_in_pixels, this.height_in_pixels);
-        ctx.beginPath();
-        ctx.arc(canvas_x_coord + this.width_in_pixels / 2 + canvas.width * .0005,
-                canvas_y_coord + this.height_in_pixels / 2 + canvas.height * .03,
-                canvas.width * .02, 0, 2 * Math.PI);
-        ctx.stroke();
     }
 }
 
@@ -158,12 +154,14 @@ function update(timestamp) {
     for (var i = 0; i < sparkles.length; i++) {
         sparkles[i].fall();
         if (sparkles[i].touching_puffy()) {
-            indices_to_remove.push(i);
             score += 1;
+        }
+        if (sparkles[i].touching_puffy() || sparkles[i].y < -1) {
+            indices_to_remove.push(i);
         }
     }
     for (const index of indices_to_remove.reverse()) {
-        sparkles.pop(index);
+        sparkles.splice(index, 1);
     }
     for (var i = 0; i < sparkles.length; i++) {
         sparkles[i].draw(timestamp);
