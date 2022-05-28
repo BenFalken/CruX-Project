@@ -26,12 +26,7 @@ $(document).ready(function(){
     terrain.src = "/static/images/terrain.png";
 
     puffy = new SmoothBrain();
-
-    sparkle = []
-    for (frame = 1; frame <= 16; frame++) {
-        sparkle[frame - 1] = new Image();
-        sparkle[frame - 1].src = "/static/images/sparklejuice/frame" + frame.toString() + ".png";
-    }
+    sparkles = [new Sparkle()];
 
     window.requestAnimationFrame(update);
 });
@@ -45,17 +40,62 @@ class SmoothBrain {
         }
         this.x = .5;
         this.y = 0;
+        this.width_in_pixels = canvas.width / 8;
+        this.height_in_pixels = canvas.width / 8;
+        this.min_x =     this.width_in_pixels / 2 / canvas.width;
+        this.max_x = 1 - this.width_in_pixels / 2 / canvas.width;
     }
     draw(timestamp) {
-        // time should be given in milliseconds
+        // smoothbrain.gif has twelve frames that each last for 70 milliseconds
         var frame_number = Math.floor(timestamp / 70) % 12;
         // calculate the canvas coordinates
-        var image_width = canvas.width / 8;
-        var image_height = image_width;
-        var canvas_x_coord = canvas.width  * this.x - image_width / 2;
-        var canvas_y_coord = canvas.height * (1 - this.y) - image_height;
-        // smoothbrain.gif has twelve frames that each last for 70 milliseconds
-        ctx.drawImage(this.frames[frame_number], canvas_x_coord, canvas_y_coord, image_width, image_height);
+        var canvas_x_coord = canvas.width  * this.x - this.width_in_pixels / 2;
+        // the .8 in this next line is there is a fudge factor to account for the large transparent padding in the image files
+        var canvas_y_coord = canvas.height * (1 - this.y) - this.height_in_pixels * .8;
+        ctx.drawImage(this.frames[frame_number], canvas_x_coord, canvas_y_coord, this.width_in_pixels, this.height_in_pixels);
+        ctx.beginPath();
+        ctx.arc(canvas_x_coord + this.width_in_pixels / 2,
+                canvas_y_coord + this.height_in_pixels / 2,
+                canvas.width * .03, 0, 2 * Math.PI);
+        ctx.stroke();
+    }
+}
+
+class Sparkle {
+    constructor() {
+        this.frames = [];
+        for (var i = 1; i <= 16; i++) {
+            this.frames[i - 1] = new Image();
+            this.frames[i - 1].src = "/static/images/sparklejuice/frame" + i.toString() + ".png";
+        }
+        this.width_in_pixels = canvas.width / 8;
+        this.height_in_pixels = canvas.width / 8;
+        this.fall_speed = .002 + .001 * Math.random();
+        this.frame_offset = Math.floor(Math.random() * 16);
+        this.x = (Math.random() * (canvas.width - this.width_in_pixels) + this.width_in_pixels / 2) / canvas.width;
+        this.y = 1;
+    }
+    fall() {
+        this.y -= this.fall_speed;
+    }
+    touching_puffy() {
+        var x_distance_to_puffy = this.x - puffy.x + .0005;
+        var y_distance_to_puffy = this.y - puffy.y + .03;
+        var distance_to_puffy = Math.sqrt(x_distance_to_puffy * x_distance_to_puffy + y_distance_to_puffy * y_distance_to_puffy);
+        return distance_to_puffy <= .05;
+    }
+    draw(timestamp) {
+        // smoothbrain.gif has sixteen frames that each last for 70 milliseconds
+        var frame_number = (Math.floor(timestamp / 70) + this.frame_offset) % 16;
+        // calculate the canvas coordinates
+        var canvas_x_coord = canvas.width  * this.x - this.width_in_pixels / 2;
+        var canvas_y_coord = canvas.height * (1 - this.y) - this.height_in_pixels;
+        ctx.drawImage(this.frames[frame_number], canvas_x_coord, canvas_y_coord, this.width_in_pixels, this.height_in_pixels);
+        ctx.beginPath();
+        ctx.arc(canvas_x_coord + this.width_in_pixels / 2 + canvas.width * .0005,
+                canvas_y_coord + this.height_in_pixels / 2 + canvas.height * .03,
+                canvas.width * .02, 0, 2 * Math.PI);
+        ctx.stroke();
     }
 }
 
@@ -96,20 +136,38 @@ function update(timestamp) {
 
     if (actual_direction == "left") {
         puffy.x -= .005;
-        if (puffy.x < 0) { puffy.x = 0; }
+        if (puffy.x < puffy.min_x) { puffy.x = puffy.min_x; }
     } else if (actual_direction == "right") {
         puffy.x += .005;
-        if (puffy.x > 1) { puffy.x = 1; }
+        if (puffy.x > puffy.max_x) { puffy.x = puffy.max_x; }
     } else if (predicted_direction == "left") {
         puffy.x -= .005;
-        if (puffy.x < 0) { puffy.x = 0; }
+        if (puffy.x < puffy.min_x) { puffy.x = puffy.min_x; }
     } else if (predicted_direction == "right") {
         puffy.x += .005;
-        if (puffy.x > 1) { puffy.x = 1; }
+        if (puffy.x > puffy.max_x) { puffy.x = puffy.max_x; }
+    }
+
+    if (Math.random() < .01) {
+        sparkles.push(new Sparkle());
     }
 
     ctx.drawImage(terrain, 0, 0, canvas.width, canvas.height);
+
+    var indices_to_remove = [];
+    for (var i = 0; i < sparkles.length; i++) {
+        sparkles[i].fall();
+        if (sparkles[i].touching_puffy()) {
+            indices_to_remove.push(i);
+            score += 1;
+        }
+    }
+    for (const index of indices_to_remove.reverse()) {
+        sparkles.pop(index);
+    }
+    for (var i = 0; i < sparkles.length; i++) {
+        sparkles[i].draw(timestamp);
+    }
+
     puffy.draw(timestamp);
-    // sparklejuice.gif has sixteen frames that each last for 70 milliseconds
-    ctx.drawImage(sparkle[Math.floor(timestamp / 70) % 16], 100, 100, canvas.width / 10, canvas.width / 10);
 }
