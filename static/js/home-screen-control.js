@@ -6,12 +6,11 @@ $(document).ready(function(){
     // But calculating the height from the width seems to work :)
     canvas.height = canvas.clientWidth * 1080 / 1920;
 
-    // update game every 10 milliseconds
-    timestep = 20;
-    // keep track of current time (in milliseconds), current score, and highest score
-    time = 0;
     score = 0;
     highest_score = 0;
+    sustenance = 20;
+    last_timestamp = 0;
+    game_duration_seconds = 0;
     // direction of movement, either "left" or "right" (or neither???)
     predicted_direction = "";
     actual_direction = "";
@@ -40,6 +39,7 @@ class SmoothBrain {
         }
         this.x = .5;
         this.y = 0;
+        this.speed = .005;
         this.width_in_pixels = canvas.width / 8;
         this.height_in_pixels = canvas.width / 8;
         this.min_x =     this.width_in_pixels / 2 / canvas.width;
@@ -48,7 +48,6 @@ class SmoothBrain {
     draw(timestamp) {
         // smoothbrain.gif has twelve frames that each last for 70 milliseconds
         var frame_number = Math.floor(timestamp / 70) % 12;
-        // calculate the canvas coordinates
         var canvas_x_coord = canvas.width  * this.x - this.width_in_pixels / 2;
         // the .8 in this next line is there is a fudge factor to account for the large transparent padding in the image files
         var canvas_y_coord = canvas.height * (1 - this.y) - this.height_in_pixels * .8;
@@ -65,7 +64,7 @@ class Sparkle {
         }
         this.width_in_pixels = canvas.width / 8;
         this.height_in_pixels = canvas.width / 8;
-        this.fall_speed = .002 + .002 * Math.random();
+        this.fall_speed = .002 + .003 * Math.random();
         this.frame_offset = Math.floor(Math.random() * 16);
         this.x = (Math.random() * (canvas.width - this.width_in_pixels) + this.width_in_pixels / 2) / canvas.width;
         this.y = 1;
@@ -74,14 +73,15 @@ class Sparkle {
         this.y -= this.fall_speed;
     }
     touching_puffy() {
+        // Fudge factors  <3 <3 <3
         var x_distance_to_puffy = this.x - puffy.x + .0005;
         var y_distance_to_puffy = (this.y - puffy.y + .03) * canvas.height / canvas.width;
         var distance_to_puffy = Math.sqrt(x_distance_to_puffy * x_distance_to_puffy + y_distance_to_puffy * y_distance_to_puffy);
         if (distance_to_puffy <= .05) {
             // sparkle is near puffy, bring it closer so that the animation is satisfying
             // (instead of just making the sparkle disappear when it gets close)
-            this.x += (puffy.x - this.x) * .1;
-            this.y += (puffy.y - this.y) * .1;
+            this.x += (puffy.x - this.x) * .2;
+            this.y += (puffy.y - this.y) * .2;
         }
         return distance_to_puffy <= .03;
     }
@@ -130,21 +130,35 @@ function update(timestamp) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     window.requestAnimationFrame(update);
 
+    sustenance -= (timestamp - last_timestamp) / 1000;
+    game_duration_seconds += (timestamp - last_timestamp) / 1000;
+    if (sustenance < 0) {
+        alert("Puffy died.");
+        // there's a bug where in the next update loop after restarting,
+        // there will still be a huge difference between timestamp and last_timestamp,
+        // so the sustenance will drop by however long you waiting before restarting
+        sustenance = 20;
+        score = 0;
+        game_duration_seconds = 0;
+        sparkles = [new Sparkle()];
+    }
+
     if (actual_direction == "left") {
-        puffy.x -= .005;
+        puffy.x -= puffy.speed;
         if (puffy.x < puffy.min_x) { puffy.x = puffy.min_x; }
     } else if (actual_direction == "right") {
-        puffy.x += .005;
+        puffy.x += puffy.speed;
         if (puffy.x > puffy.max_x) { puffy.x = puffy.max_x; }
     } else if (predicted_direction == "left") {
-        puffy.x -= .005;
+        puffy.x -= puffy.speed;
         if (puffy.x < puffy.min_x) { puffy.x = puffy.min_x; }
     } else if (predicted_direction == "right") {
-        puffy.x += .005;
+        puffy.x += puffy.speed;
         if (puffy.x > puffy.max_x) { puffy.x = puffy.max_x; }
     }
 
-    if (Math.random() < .01) {
+    if (Math.random() < (timestamp - last_timestamp) / 1000) {
+        // Spawn a new sparkle roughly once per second
         sparkles.push(new Sparkle());
     }
 
@@ -154,9 +168,11 @@ function update(timestamp) {
     for (var i = 0; i < sparkles.length; i++) {
         sparkles[i].fall();
         if (sparkles[i].touching_puffy()) {
+            sustenance += 1 + 2 / (1 + game_duration_seconds / 10);
             score += 1;
-        }
-        if (sparkles[i].touching_puffy() || sparkles[i].y < -1) {
+            if (score > highest_score) { highest_score = score; }
+            indices_to_remove.push(i);
+        } else if (sparkles[i].y < -1) {
             indices_to_remove.push(i);
         }
     }
@@ -168,4 +184,20 @@ function update(timestamp) {
     }
 
     puffy.draw(timestamp);
+
+    ctx.font = "bold 50px Lato";
+    ctx.fillStyle = "white";
+    ctx.lineWidth = "5px";
+    ctx.strokeStyle = "black";
+    var text = "Highest score: " + highest_score.toString();
+    ctx.fillText(text, 50, 50);
+    ctx.strokeText(text, 50, 50);
+    text = "Score: " + score.toString();
+    ctx.fillText(text, 50, 100);
+    ctx.strokeText(text, 50, 100);
+    text = "Sustenance: " + sustenance.toFixed(1);
+    ctx.fillText(text, 50, 150);
+    ctx.strokeText(text, 50, 150);
+
+    last_timestamp = timestamp;
 }
