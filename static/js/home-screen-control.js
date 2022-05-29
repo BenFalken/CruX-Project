@@ -11,8 +11,26 @@ $(document).ready(function(){
         particles.push(new Particle(mouse_x, mouse_y));
         particles.push(new Particle(mouse_x, mouse_y));
     });
+    // Start playing when you click
+    canvas.addEventListener("mousedown", event => {
+        var mouse_x = event.offsetX / canvas.clientWidth;
+        var mouse_y = 1 - event.offsetY / canvas.clientHeight;
+        for (var i = 0; i < 50; i++) {
+            particles.push(new Particle(mouse_x, mouse_y));
+        }
+        if (game_state == "ready" || game_state == "dead") {
+            game_state = "alive";
+            sustenance = 20;
+            game_duration_seconds = 0;
+            death_duration_seconds = 0;
+            sparkles = [new Sparkle()];
+            score = 0;
+            puffy.x = .5;
+        }
+    });
 
-    game_state = "alive";
+    // game_state is sort of like an enum -- it should always be "ready" or "alive" or "dead"
+    game_state = "ready";
     score = 0;
     highest_score = 0;
     sustenance = 20;
@@ -27,7 +45,7 @@ $(document).ready(function(){
     // Initialize the socket and receive data from server
     socket = io.connect('http://' + document.domain + ':' + location.port + '/test');
     socket.on('new_test_data', function(msg) {
-        direction = msg.direction_to_move;
+        actual_direction = msg.direction_to_move;
     });
 
     terrain = new Image();
@@ -42,6 +60,7 @@ $(document).ready(function(){
     window.requestAnimationFrame(update);
 });
 
+// SMOOTHBRAIN CLASS
 class SmoothBrain {
     constructor() {
         this.frames = [];
@@ -67,6 +86,7 @@ class SmoothBrain {
     }
 }
 
+// SPARKLE CLASS
 class Sparkle {
     constructor() {
         this.frames = [];
@@ -107,6 +127,7 @@ class Sparkle {
     }
 }
 
+// PARTICLE CLASS
 class Particle {
     constructor(x, y) {
         this.x = x;
@@ -122,8 +143,9 @@ class Particle {
             // Red to brown
             this.color = rgb([150 - random_factor * 100, 30, 0]);
         }
-        this.x_velocity = .002 - .004 * Math.random();
-        this.y_velocity = .005 - .01 * Math.random();
+        var angle = Math.random() * 2 * Math.PI;
+        this.x_velocity = .002 * Math.cos(angle) * Math.random();
+        this.y_velocity = .005 * Math.sin(angle) * Math.random();
         this.fall_speed = .0003;
         this.size = Math.random() * .003 + .002;
     }
@@ -161,10 +183,8 @@ function stop_playing() {
     });
 }
 
-/**
- * Taken directly from https://stackoverflow.com/questions/2353211/hsl-to-rgb-color-conversion
- * see documentation there  :)
- */
+// Taken directly from https://stackoverflow.com/questions/2353211/hsl-to-rgb-color-conversion
+// see documentation there  :)
 function hslToRgb(h, s, l){
     var r, g, b;
     if (s == 0) {
@@ -200,15 +220,22 @@ window.addEventListener("keydown", event => {
     }
 });
 window.addEventListener("keyup", event => {
-    actual_direction = "";
+    if (event.keyCode == 37 || event.keyCode == 39) {
+        // If user releases left or right arrow key, stop moving left/right
+        actual_direction = "";
+    }
 });
+
 
 function update(timestamp) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     window.requestAnimationFrame(update);
 
-    sustenance -= (timestamp - last_timestamp) / 1000;
-    game_duration_seconds += (timestamp - last_timestamp) / 1000;
+    if (game_state == "alive") {
+        sustenance -= (timestamp - last_timestamp) / 1000;
+        game_duration_seconds += (timestamp - last_timestamp) / 1000;
+    }
+
     if (sustenance < 0) {
         game_state = "dead";
         sustenance = 0;
@@ -280,6 +307,60 @@ function update(timestamp) {
         puffy.draw(0);
     }
 
+    // Prepare to draw score counter at lop left
+    var font_size = Math.round(canvas.height / 20);
+    ctx.textAlign = "left";
+    ctx.font = "bold " + font_size.toString() + "px Lato";
+    ctx.fillStyle = "white";
+    ctx.lineWidth = Math.round(canvas.height / 500);
+    ctx.strokeStyle = "black";
+    // Draw score counter at top left of canvas
+    var text = "Highest score: " + highest_score.toString();
+    ctx.fillText(text, font_size, font_size);
+    ctx.strokeText(text, font_size, font_size);
+    text = "Score: " + score.toString();
+    ctx.fillText(text, font_size, font_size * 2);
+    ctx.strokeText(text, font_size, font_size * 2);
+    text = "Sustenance: " + sustenance.toFixed(1);
+    ctx.fillText(text, font_size, font_size * 3);
+    ctx.strokeText(text, font_size, font_size * 3);
+
+    // Draw "game over" screen
+    if (game_state == "dead") {
+        font_size = Math.round(canvas.height / 5);
+        ctx.font = "bold " + font_size.toString() + "px Lato";
+        ctx.fillStyle = "white";
+        ctx.lineWidth = Math.round(canvas.height / 100);
+        ctx.strokeStyle = "black";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("GAME OVER", canvas.width / 2, (canvas.height - font_size) / 2);
+        ctx.strokeText("GAME OVER", canvas.width / 2, (canvas.height - font_size) / 2);
+
+        font_size = Math.round(canvas.height / 20);
+        ctx.font = "bold italic " + font_size.toString() + "px Lato";
+        ctx.fillStyle = "white";
+        ctx.lineWidth = Math.round(canvas.height / 500);
+        ctx.strokeStyle = "black";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("click anywhere to play again", canvas.width / 2, canvas.height * .55);
+        ctx.strokeText("click anywhere to play again", canvas.width / 2, canvas.height * .55);
+    }
+
+    // Draw start screen
+    if (game_state == "ready") {
+        font_size = Math.round(canvas.height / 15);
+        ctx.font = "bold italic " + font_size.toString() + "px Lato";
+        ctx.fillStyle = "white";
+        ctx.lineWidth = Math.round(canvas.height / 400);
+        ctx.strokeStyle = "black";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("click anywhere to play", canvas.width / 2, canvas.height / 2);
+        ctx.strokeText("click anywhere to play", canvas.width / 2, canvas.height / 2);
+    }
+
     // Draw particles (and remove them once fallen offscreen, to avoid lag)
     var particle_indices_to_remove = [];
     for (var i = 0; i < particles.length; i++) {
@@ -292,22 +373,6 @@ function update(timestamp) {
     for (const index of particle_indices_to_remove.reverse()) {
         particles.splice(index, 1);
     }
-
-    var font_size = Math.floor(canvas.height / 20);
-    ctx.font = "bold " + font_size.toString() + "px Lato";
-    ctx.fillStyle = "white";
-    ctx.lineWidth = "5px";
-    ctx.strokeStyle = "black";
-
-    var text = "Highest score: " + highest_score.toString();
-    ctx.fillText(text, font_size, font_size);
-    ctx.strokeText(text, font_size, font_size);
-    text = "Score: " + score.toString();
-    ctx.fillText(text, font_size, font_size * 2);
-    ctx.strokeText(text, font_size, font_size * 2);
-    text = "Sustenance: " + sustenance.toFixed(1);
-    ctx.fillText(text, font_size, font_size * 3);
-    ctx.strokeText(text, font_size, font_size * 3);
 
     last_timestamp = timestamp;
 }
