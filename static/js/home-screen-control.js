@@ -2,9 +2,8 @@ $(document).ready(function(){
     canvas = document.getElementById("game-canvas");
     ctx = canvas.getContext("2d");
     canvas.width = canvas.clientWidth;
-    // For some reason this was buggy when I tried just saying canvas.height = canvas.clientHeight
-    // But calculating the height from the width seems to work :)
     canvas.height = canvas.clientWidth * 1080 / 1920;
+    sparkle_and_brain_image_size_in_pixels = canvas.clientWidth / 8;
     canvas.addEventListener("mousemove", event => {
         var mouse_x = event.offsetX / canvas.clientWidth;
         var mouse_y = 1 - event.offsetY / canvas.clientHeight;
@@ -45,7 +44,7 @@ $(document).ready(function(){
     // Initialize the socket and receive data from server
     socket = io.connect('http://' + document.domain + ':' + location.port + '/test');
     socket.on('new_test_data', function(msg) {
-        actual_direction = msg.direction_to_move;
+        predicted_direction = msg.direction_to_move;
     });
 
     terrain = new Image();
@@ -71,18 +70,16 @@ class SmoothBrain {
         this.x = .5;
         this.y = 0;
         this.speed = .005;
-        this.width_in_pixels = canvas.width / 8;
-        this.height_in_pixels = canvas.width / 8;
-        this.min_x =     this.width_in_pixels / 2 / canvas.width;
-        this.max_x = 1 - this.width_in_pixels / 2 / canvas.width;
+        this.min_x =     sparkle_and_brain_image_size_in_pixels / 2 / canvas.width;
+        this.max_x = 1 - sparkle_and_brain_image_size_in_pixels / 2 / canvas.width;
     }
     draw(timestamp) {
         // smoothbrain.gif has twelve frames that each last for 70 milliseconds
         var frame_number = Math.floor(timestamp / 70) % 12;
-        var canvas_x_coord = canvas.width  * this.x - this.width_in_pixels / 2;
+        var canvas_x_coord = canvas.width  * this.x - sparkle_and_brain_image_size_in_pixels / 2;
         // the .8 in this next line is there is a fudge factor to account for the large transparent padding in the image files
-        var canvas_y_coord = canvas.height * (1 - this.y) - this.height_in_pixels * .8;
-        ctx.drawImage(this.frames[frame_number], canvas_x_coord, canvas_y_coord, this.width_in_pixels, this.height_in_pixels);
+        var canvas_y_coord = canvas.height * (1 - this.y) - sparkle_and_brain_image_size_in_pixels * .8;
+        ctx.drawImage(this.frames[frame_number], canvas_x_coord, canvas_y_coord, sparkle_and_brain_image_size_in_pixels, sparkle_and_brain_image_size_in_pixels);
     }
 }
 
@@ -94,11 +91,9 @@ class Sparkle {
             this.frames[i - 1] = new Image();
             this.frames[i - 1].src = "/static/images/sparklejuice/frame" + i.toString() + ".png";
         }
-        this.width_in_pixels = canvas.width / 8;
-        this.height_in_pixels = canvas.width / 8;
         this.fall_speed = .002 + .003 * Math.random();
         this.frame_offset = Math.floor(Math.random() * 16);
-        this.x = (Math.random() * (canvas.width - this.width_in_pixels) + this.width_in_pixels / 2) / canvas.width;
+        this.x = (Math.random() * (canvas.width - sparkle_and_brain_image_size_in_pixels) + sparkle_and_brain_image_size_in_pixels / 2) / canvas.width;
         this.y = 1;
     }
     fall() {
@@ -121,9 +116,9 @@ class Sparkle {
         // smoothbrain.gif has sixteen frames that each last for 70 milliseconds
         var frame_number = (Math.floor(timestamp / 70) + this.frame_offset) % 16;
         // calculate the canvas coordinates
-        var canvas_x_coord = canvas.width  * this.x - this.width_in_pixels / 2;
-        var canvas_y_coord = canvas.height * (1 - this.y) - this.height_in_pixels;
-        ctx.drawImage(this.frames[frame_number], canvas_x_coord, canvas_y_coord, this.width_in_pixels, this.height_in_pixels);
+        var canvas_x_coord = canvas.width  * this.x - sparkle_and_brain_image_size_in_pixels / 2;
+        var canvas_y_coord = canvas.height * (1 - this.y) - sparkle_and_brain_image_size_in_pixels;
+        ctx.drawImage(this.frames[frame_number], canvas_x_coord, canvas_y_coord, sparkle_and_brain_image_size_in_pixels, sparkle_and_brain_image_size_in_pixels);
     }
 }
 
@@ -225,7 +220,11 @@ window.addEventListener("keyup", event => {
         actual_direction = "";
     }
 });
-
+window.addEventListener("resize", event => {
+    canvas.width = canvas.clientWidth;
+    canvas.height = canvas.clientWidth * 1080 / 1920;
+    sparkle_and_brain_image_size_in_pixels = canvas.clientWidth / 8;
+});
 
 function update(timestamp) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -312,7 +311,7 @@ function update(timestamp) {
     ctx.textAlign = "left";
     ctx.font = "bold " + font_size.toString() + "px Lato";
     ctx.fillStyle = "white";
-    ctx.lineWidth = Math.round(canvas.height / 500);
+    ctx.lineWidth = Math.floor(canvas.height / 500);
     ctx.strokeStyle = "black";
     // Draw score counter at top left of canvas
     var text = "Highest score: " + highest_score.toString();
@@ -330,7 +329,7 @@ function update(timestamp) {
         font_size = Math.round(canvas.height / 5);
         ctx.font = "bold " + font_size.toString() + "px Lato";
         ctx.fillStyle = "white";
-        ctx.lineWidth = Math.round(canvas.height / 100);
+        ctx.lineWidth = Math.floor(canvas.height / 100);
         ctx.strokeStyle = "black";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
@@ -340,12 +339,12 @@ function update(timestamp) {
         font_size = Math.round(canvas.height / 20);
         ctx.font = "bold italic " + font_size.toString() + "px Lato";
         ctx.fillStyle = "white";
-        ctx.lineWidth = Math.round(canvas.height / 500);
+        ctx.lineWidth = Math.floor(canvas.height / 500);
         ctx.strokeStyle = "black";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.fillText("click anywhere to play again", canvas.width / 2, canvas.height * .55);
-        ctx.strokeText("click anywhere to play again", canvas.width / 2, canvas.height * .55);
+        ctx.fillText("click to play again", canvas.width / 2, canvas.height * .55);
+        ctx.strokeText("click to play again", canvas.width / 2, canvas.height * .55);
     }
 
     // Draw start screen
@@ -357,8 +356,8 @@ function update(timestamp) {
         ctx.strokeStyle = "black";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.fillText("click anywhere to play", canvas.width / 2, canvas.height / 2);
-        ctx.strokeText("click anywhere to play", canvas.width / 2, canvas.height / 2);
+        ctx.fillText("click to play", canvas.width / 2, canvas.height / 2);
+        ctx.strokeText("click to play", canvas.width / 2, canvas.height / 2);
     }
 
     // Draw particles (and remove them once fallen offscreen, to avoid lag)
