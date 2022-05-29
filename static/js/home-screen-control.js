@@ -21,7 +21,6 @@ $(document).ready(function(){
             game_state = "alive";
             sustenance = 20;
             game_duration_seconds = 0;
-            death_duration_seconds = 0;
             sparkles = [new Sparkle()];
             score = 0;
             puffy.x = .5;
@@ -34,9 +33,8 @@ $(document).ready(function(){
     highest_score = 0;
     sustenance = 20;
     last_timestamp = 0;
-    // game_duration_seconds is only applicable if alive, and death_duration_seconds is only applicable if dead
+    // game_duration_seconds is only applicable if alive
     game_duration_seconds = 0;
-    death_duration_seconds = 0;
     // direction of movement, either "left" or "right" (or neither???)
     predicted_direction = "";
     actual_direction = "";
@@ -242,7 +240,7 @@ function update(timestamp) {
     if (game_state == "dead") {
         score = 0;
         game_duration_seconds = 0;
-        death_duration_seconds += (timestamp - last_timestamp) / 1000;
+        sparkles = [];
     }
 
     if (game_state == "alive") {
@@ -267,14 +265,12 @@ function update(timestamp) {
     }
 
     ctx.drawImage(terrain, 0, 0, canvas.width, canvas.height);
-    if (game_state == "dead") {
-        // Gradually fade into game over screen and then make sparkles vanish
-        var fade_animation_time = .5;
-        ctx.globalAlpha = Math.min(death_duration_seconds / fade_animation_time, 1);
+    if (game_state == "dead" || sustenance < 3) {
+        // Gradually fade into "game over" screen and then make sparkles vanish
+        var deadness = 1 - sustenance / 3;
+        if (game_state == "dead") { deadness = 1; }
+        ctx.globalAlpha = deadness;
         ctx.drawImage(game_over_screen, 0, 0, canvas.width, canvas.height);
-        if (death_duration_seconds / fade_animation_time > 1) {
-            sparkles = [];
-        }
     }
     ctx.globalAlpha = 1;
 
