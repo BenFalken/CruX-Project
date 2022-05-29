@@ -265,9 +265,9 @@ function update(timestamp) {
     }
 
     ctx.drawImage(terrain, 0, 0, canvas.width, canvas.height);
-    if (game_state == "dead" || sustenance < 3) {
+    if (game_state == "dead" || sustenance < 5) {
         // Gradually fade into "game over" screen and then make sparkles vanish
-        var deadness = 1 - sustenance / 3;
+        var deadness = 1 - Math.ceil(sustenance) / 5;
         if (game_state == "dead") { deadness = 1; }
         ctx.globalAlpha = deadness;
         ctx.drawImage(game_over_screen, 0, 0, canvas.width, canvas.height);
