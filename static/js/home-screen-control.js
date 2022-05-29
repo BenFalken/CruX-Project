@@ -5,12 +5,21 @@ $(document).ready(function(){
     // For some reason this was buggy when I tried just saying canvas.height = canvas.clientHeight
     // But calculating the height from the width seems to work :)
     canvas.height = canvas.clientWidth * 1080 / 1920;
+    canvas.addEventListener("mousemove", event => {
+        var mouse_x = event.offsetX / canvas.clientWidth;
+        var mouse_y = 1 - event.offsetY / canvas.clientHeight;
+        particles.push(new Particle(mouse_x, mouse_y));
+        particles.push(new Particle(mouse_x, mouse_y));
+    });
 
+    game_state = "alive";
     score = 0;
     highest_score = 0;
     sustenance = 20;
     last_timestamp = 0;
+    // game_duration_seconds is only applicable if alive, and death_duration_seconds is only applicable if dead
     game_duration_seconds = 0;
+    death_duration_seconds = 0;
     // direction of movement, either "left" or "right" (or neither???)
     predicted_direction = "";
     actual_direction = "";
@@ -23,9 +32,12 @@ $(document).ready(function(){
 
     terrain = new Image();
     terrain.src = "/static/images/terrain.png";
+    game_over_screen = new Image();
+    game_over_screen.src = "/static/images/gameover.png";
 
     puffy = new SmoothBrain();
     sparkles = [new Sparkle()];
+    particles = [];
 
     window.requestAnimationFrame(update);
 });
@@ -95,6 +107,41 @@ class Sparkle {
     }
 }
 
+class Particle {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        var random_factor = Math.random();
+        if (game_state == "ready") {
+            // White to light blue
+            this.color = rgb([220 - random_factor * 100, 220 - random_factor * 100, 255]);
+        } else if (game_state == "alive") {
+            // Rainbow
+            this.color = rgb(hslToRgb(random_factor, 1, .7));
+        } else if (game_state == "dead") {
+            // Red to brown
+            this.color = rgb([150 - random_factor * 100, 30, 0]);
+        }
+        this.x_velocity = .002 - .004 * Math.random();
+        this.y_velocity = .005 - .01 * Math.random();
+        this.fall_speed = .0003;
+        this.size = Math.random() * .003 + .002;
+    }
+    draw() {
+        ctx.fillStyle = this.color;
+        ctx.fillRect(this.x * canvas.width  - canvas.width * this.size / 2,
+                     (1 - this.y) * canvas.height - canvas.width * this.size / 2,
+                     this.size * canvas.width,
+                     this.size * canvas.width
+        );
+    }
+    update() {
+        this.x += this.x_velocity;
+        this.y += this.y_velocity;
+        this.y_velocity -= this.fall_speed;
+    }
+}
+
 // Sets the play button to on and triggers the start_streaming function in app.py
 function start_playing() {
     var color =  $("#stream-button").css("background-color");
@@ -114,6 +161,37 @@ function stop_playing() {
     });
 }
 
+/**
+ * Taken directly from https://stackoverflow.com/questions/2353211/hsl-to-rgb-color-conversion
+ * see documentation there  :)
+ */
+function hslToRgb(h, s, l){
+    var r, g, b;
+    if (s == 0) {
+        r = g = b = l; // achromatic
+    } else {
+        var hue2rgb = function hue2rgb(p, q, t){
+            if (t < 0) t += 1;
+            if (t > 1) t -= 1;
+            if (t < 1/6) return p + (q - p) * 6 * t;
+            if (t < 1/2) return q;
+            if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+            return p;
+        }
+        var q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+        var p = 2 * l - q;
+        r = hue2rgb(p, q, h + 1/3);
+        g = hue2rgb(p, q, h);
+        b = hue2rgb(p, q, h - 1/3);
+    }
+    return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+}
+
+
+function rgb(values) {
+    return 'rgb(' + values.join(', ') + ')';
+}
+
 window.addEventListener("keydown", event => {
     if (event.keyCode == 37) {
         actual_direction = "left";
@@ -125,7 +203,6 @@ window.addEventListener("keyup", event => {
     actual_direction = "";
 });
 
-
 function update(timestamp) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     window.requestAnimationFrame(update);
@@ -133,71 +210,104 @@ function update(timestamp) {
     sustenance -= (timestamp - last_timestamp) / 1000;
     game_duration_seconds += (timestamp - last_timestamp) / 1000;
     if (sustenance < 0) {
-        alert("Puffy died.");
-        // there's a bug where in the next update loop after restarting,
-        // there will still be a huge difference between timestamp and last_timestamp,
-        // so the sustenance will drop by however long you waiting before restarting
-        sustenance = 20;
+        game_state = "dead";
+        sustenance = 0;
+    }
+    if (game_state == "dead") {
         score = 0;
         game_duration_seconds = 0;
-        sparkles = [new Sparkle()];
+        death_duration_seconds += (timestamp - last_timestamp) / 1000;
     }
 
-    if (actual_direction == "left") {
-        puffy.x -= puffy.speed;
-        if (puffy.x < puffy.min_x) { puffy.x = puffy.min_x; }
-    } else if (actual_direction == "right") {
-        puffy.x += puffy.speed;
-        if (puffy.x > puffy.max_x) { puffy.x = puffy.max_x; }
-    } else if (predicted_direction == "left") {
-        puffy.x -= puffy.speed;
-        if (puffy.x < puffy.min_x) { puffy.x = puffy.min_x; }
-    } else if (predicted_direction == "right") {
-        puffy.x += puffy.speed;
-        if (puffy.x > puffy.max_x) { puffy.x = puffy.max_x; }
-    }
+    if (game_state == "alive") {
+        if (actual_direction == "left") {
+            puffy.x -= puffy.speed;
+            if (puffy.x < puffy.min_x) { puffy.x = puffy.min_x; }
+        } else if (actual_direction == "right") {
+            puffy.x += puffy.speed;
+            if (puffy.x > puffy.max_x) { puffy.x = puffy.max_x; }
+        } else if (predicted_direction == "left") {
+            puffy.x -= puffy.speed;
+            if (puffy.x < puffy.min_x) { puffy.x = puffy.min_x; }
+        } else if (predicted_direction == "right") {
+            puffy.x += puffy.speed;
+            if (puffy.x > puffy.max_x) { puffy.x = puffy.max_x; }
+        }
 
-    if (Math.random() < (timestamp - last_timestamp) / 1000) {
-        // Spawn a new sparkle roughly once per second
-        sparkles.push(new Sparkle());
+        if (Math.random() < (timestamp - last_timestamp) / 1000) {
+            // Spawn a new sparkle roughly once per second
+            sparkles.push(new Sparkle());
+        }
     }
 
     ctx.drawImage(terrain, 0, 0, canvas.width, canvas.height);
-
-    var indices_to_remove = [];
-    for (var i = 0; i < sparkles.length; i++) {
-        sparkles[i].fall();
-        if (sparkles[i].touching_puffy()) {
-            sustenance += 1 + 2 / (1 + game_duration_seconds / 10);
-            score += 1;
-            if (score > highest_score) { highest_score = score; }
-            indices_to_remove.push(i);
-        } else if (sparkles[i].y < -1) {
-            indices_to_remove.push(i);
+    if (game_state == "dead") {
+        // Gradually fade into game over screen and then make sparkles vanish
+        var fade_animation_time = .5;
+        ctx.globalAlpha = Math.min(death_duration_seconds / fade_animation_time, 1);
+        ctx.drawImage(game_over_screen, 0, 0, canvas.width, canvas.height);
+        if (death_duration_seconds / fade_animation_time > 1) {
+            sparkles = [];
         }
     }
-    for (const index of indices_to_remove.reverse()) {
-        sparkles.splice(index, 1);
+    ctx.globalAlpha = 1;
+
+    if (game_state == "alive") {
+        // Draw sparkles (and remove them once fallen offscreen, to avoid lag)
+        var sparkle_indices_to_remove = [];
+        for (var i = 0; i < sparkles.length; i++) {
+            sparkles[i].fall();
+            if (sparkles[i].touching_puffy()) {
+                sustenance += 1 + 2 / (1 + game_duration_seconds / 10);
+                score += 1;
+                if (score > highest_score) { highest_score = score; }
+                sparkle_indices_to_remove.push(i);
+            } else if (sparkles[i].y < -1) {
+                sparkle_indices_to_remove.push(i);
+            }
+        }
+        for (const index of sparkle_indices_to_remove.reverse()) {
+            sparkles.splice(index, 1);
+        }
     }
     for (var i = 0; i < sparkles.length; i++) {
         sparkles[i].draw(timestamp);
     }
 
-    puffy.draw(timestamp);
+    if (game_state == "alive" || game_state == "ready") {
+        puffy.draw(timestamp);
+    } else if (game_state == "dead") {
+        puffy.draw(0);
+    }
 
-    ctx.font = "bold 50px Lato";
+    // Draw particles (and remove them once fallen offscreen, to avoid lag)
+    var particle_indices_to_remove = [];
+    for (var i = 0; i < particles.length; i++) {
+        particles[i].update();
+        particles[i].draw();
+        if (particles[i].y < -1) {
+            particle_indices_to_remove.push(i);
+        }
+    }
+    for (const index of particle_indices_to_remove.reverse()) {
+        particles.splice(index, 1);
+    }
+
+    var font_size = Math.floor(canvas.height / 20);
+    ctx.font = "bold " + font_size.toString() + "px Lato";
     ctx.fillStyle = "white";
     ctx.lineWidth = "5px";
     ctx.strokeStyle = "black";
+
     var text = "Highest score: " + highest_score.toString();
-    ctx.fillText(text, 50, 50);
-    ctx.strokeText(text, 50, 50);
+    ctx.fillText(text, font_size, font_size);
+    ctx.strokeText(text, font_size, font_size);
     text = "Score: " + score.toString();
-    ctx.fillText(text, 50, 100);
-    ctx.strokeText(text, 50, 100);
+    ctx.fillText(text, font_size, font_size * 2);
+    ctx.strokeText(text, font_size, font_size * 2);
     text = "Sustenance: " + sustenance.toFixed(1);
-    ctx.fillText(text, 50, 150);
-    ctx.strokeText(text, 50, 150);
+    ctx.fillText(text, font_size, font_size * 3);
+    ctx.strokeText(text, font_size, font_size * 3);
 
     last_timestamp = timestamp;
 }
