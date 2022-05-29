@@ -21,10 +21,12 @@ class DataClassifier:
 
     # Checks if our data is balanced enough
     def check_if_data_viable(self):
-        file_count_ratio = self.open_file_count / self.closed_file_count
+        file_count_ratio = self.left_motion_file_count / self.right_motion_file_count
+        """
         if file_count_ratio < 0.8 or file_count_ratio > 1.25:
             print("It is ill-advised to create a network with skewed data! Please record more data and try again.")
             self.viable_data = False
+        """
 
     # Create an array that will hold all of our necessary data
     def initialize_data_and_labels(self):
