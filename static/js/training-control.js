@@ -160,7 +160,7 @@ function start_recording_right_motion() {
 
 // Resets recording button colors and triggers create_network function in app.py
 function create_network() {
-    alert("Now processing your data!")
+    //alert("Now processing your data!")
     graph_is_ready = false;
     $.getJSON('/create_network',
         function(data) {

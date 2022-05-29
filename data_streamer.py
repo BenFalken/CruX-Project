@@ -34,18 +34,28 @@ class DataStreamer:
 
     # Get all the data in a certain time window. If board isn't connected, just return a string of ones
     def get_current_data(self):
-        try:
+        """
+        if 1 == 1:
             data = self.board.get_board_data(DELAY) # this gets data continiously
             c3_data_list = [val*SCALE_FACTOR_EEG for val in data[1]]
-            c4_data_list = [val*SCALE_FACTOR_EEG for val in data[1]]
+            c4_data_list = [val*SCALE_FACTOR_EEG for val in data[2]]
             
             if len(self.all_c3_data) > DATA_CHUNK_SIZE:
                 self.all_c3_data = self.all_c3_data[-1*DATA_CHUNK_SIZE:]
             if len(self.all_c4_data) > DATA_CHUNK_SIZE:
                 self.all_c4_data = self.all_c4_data[-1*DATA_CHUNK_SIZE:]
-        except:
-            c3_data_list = [randint(-10, 10) for _ in range(DELAY)]
-            c4_data_list = [randint(-10, 10) for _ in range(DELAY)]
+        else:
+            c3_data_list = [1 for _ in range(DELAY)]
+            c4_data_list = [1 for _ in range(DELAY)]
+        """
+        data = self.board.get_board_data(DELAY) # this gets data continiously
+        c3_data_list = [val*SCALE_FACTOR_EEG for val in data[1]]
+        c4_data_list = [val*SCALE_FACTOR_EEG for val in data[2]]
+            
+        if len(self.all_c3_data) > DATA_CHUNK_SIZE:
+            self.all_c3_data = self.all_c3_data[-1*DATA_CHUNK_SIZE:]
+        if len(self.all_c4_data) > DATA_CHUNK_SIZE:
+            self.all_c4_data = self.all_c4_data[-1*DATA_CHUNK_SIZE:]
         self.all_c3_data.extend(c3_data_list)
         self.all_c4_data.extend(c4_data_list)
         self.current_time += DELAY
