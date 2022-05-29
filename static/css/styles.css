@@ -180,10 +180,10 @@ h6 {
     padding-bottom: 1em;
 }
 
-#terrain {
+#game-canvas {
     margin: 2.5% 10% 2.5% 10%;
-    max-width: 80%;
-    max-height: calc(80% * 1080 / 1920);
+    width: 80%;
+    height: calc(80% * 1080 / 1920);
     border-radius: 1em;
     border: 2px solid gray;
 }
@@ -214,4 +214,13 @@ h6 {
     border-radius: 50%;
     background-image: url("/static/images/binary.gif");
     border: 4px solid lightgrey;
+}
+
+#instructions {
+    font-family: 'Nunito', sans-serif;
+    font-size: 1.5vw;
+    text-align: left;
+    color:rgb(80, 80, 80);
+    margin-left: 10%;
+    width: 80%;
 }
