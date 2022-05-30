@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 ### BEN IF YOU DELETE THE SHEBANG ONE MORE TIME I'M GONNA GET YOU (I KNOW WHERE YOU SLEEP)
 
-## Import everything <3 ##
+## Import everything ##
 from flask_socketio import SocketIO
 from flask import Flask, render_template
 from threading import Thread, Event
