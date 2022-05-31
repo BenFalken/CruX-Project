@@ -238,7 +238,6 @@ function update(timestamp) {
         sustenance = 0;
     }
     if (game_state == "dead") {
-        score = 0;
         game_duration_seconds = 0;
         sparkles = [];
     }
