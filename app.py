@@ -87,7 +87,7 @@ def send_data(c3_data=[], c4_data=[], direction_to_move=''):
     global namespace
     socketio.emit('new_test_data', {
         'c3_data': c3_data,
-        'c3_data': c4_data,  
+        'c4_data': c4_data,  
         'graph_frozen': False, 
         'direction_to_move': direction_to_move,
         'left_motion_file_count': streamer.left_motion_file_count, 
@@ -95,7 +95,7 @@ def send_data(c3_data=[], c4_data=[], direction_to_move=''):
         'window_size': WINDOW_SIZE}, namespace='/test')
     socketio.emit('new_train_data', {
         'c3_data': c3_data,
-        'c3_data': c4_data,  
+        'c4_data': c4_data,  
         'graph_frozen': False, 
         'direction_to_move': direction_to_move,
         'left_motion_file_count': streamer.left_motion_file_count, 
@@ -114,7 +114,8 @@ def process_prediction(prediction):
 def process_data(c3_data=[], c4_data=[]):
     global streamer, classifier, namespace
     direction_to_move = ''
-    if streamer.is_recording_training_data and streamer.current_time > 0 and streamer.current_time % DATA_CHUNK_SIZE == 0:
+    if streamer.is_recording_training_data and streamer.current_time > 0 and streamer.current_time >= DATA_CHUNK_SIZE:
+        streamer.current_time = 0
         add_data_streamed_at_current_time()
     elif streamer.is_streaming_testing_data and streamer.current_time > DATA_CHUNK_SIZE:
         prediction = classifier.classify_input(streamer.all_c3_data, streamer.all_c4_data)

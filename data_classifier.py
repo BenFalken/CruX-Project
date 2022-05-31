@@ -50,11 +50,8 @@ class DataClassifier:
         return filtered
 
     def preprocess_signal(self, data):
-        filtered_signal = self.filter_data(signal)
-        if filtered_signal.size < DATA_CHUNK_SIZE:
-            remaining_size = int(DATA_CHUNK_SIZE - filtered_signal.size)
-            filtered_normalized_signal = np.concatenate([filtered_signal, int(filtered_signal[-1])*np.ones((remaining_size))])
-        f, t, signal_stft = signal.stft(filtered_normalized_signal, nperseg=196)
+        filtered_signal = self.filter_data(data)
+        f, t, signal_stft = signal.stft(filtered_signal, nperseg=196)
         signal_stft = np.abs(signal_stft)
         return signal_stft
 
@@ -71,7 +68,7 @@ class DataClassifier:
 
             for i in range(STFT_F_SIZE):
                 for j in range(STFT_T_SIZE):
-                    self.all_data[self.random_indices[self.count]][i][j][0] = (c3_signal_stft[i][j]/c4_signal_stft)
+                    self.all_data[self.random_indices[self.count]][i][j][0] = (c3_signal_stft[i][j]/c4_signal_stft[i][j])
             self.all_labels[self.random_indices[self.count]] = label
 
             self.count += 1
@@ -110,11 +107,13 @@ class DataClassifier:
         num_images = len(images)
         assert num_images == len(labels)
 
+        num_of_train_images = int(num_images * .2)
+
         # Split 20% of the data into the test set and the rest into the training set
-        test_images = images[num_images * .2 : ]
-        test_labels = labels[num_images * .2 : ]
-        train_images = images[: num_images * .2]
-        train_labels = labels[: num_images * .2]
+        test_images = images[num_of_train_images:]
+        test_labels = labels[num_of_train_images:]
+        train_images = images[:num_of_train_images]
+        train_labels = labels[:num_of_train_images]
 
         self.make_model(input_shape=train_images.shape[1:])
 
