@@ -186,6 +186,7 @@ h6 {
     height: calc(80% * 1080 / 1920);
     border-radius: 1em;
     border: 2px solid gray;
+    cursor: pointer;
 }
 
 #avatar {
