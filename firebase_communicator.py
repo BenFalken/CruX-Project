@@ -30,7 +30,7 @@ class FirebaseCommunicator:
     
     # Downloads the model from firebase and stores it as a tflite file
     def get_model_source(self):
-        URL = "https://firebasestorage.googleapis.com/v0/b/arasi-3c613.appspot.com/o/Firebase%2FML%2FModels%2Ffirebase_ml_model.tflite?alt=media&token=70bafff8-46f5-4509-b1dd-02cbef979ea0"
+        URL = "https://firebasestorage.googleapis.com/v0/b/arasi-3c613.appspot.com/o/Firebase%2FML%2FModels%2Ffirebase_ml_model.tflite?alt=media&token=ba06bb30-e724-4dfb-8ad4-98ae7755a1f1"
         response = requests.get(URL)
         arasi_file_write = open("arasi_model.tflite", "wb")
         arasi_file_write.write(response.content)
