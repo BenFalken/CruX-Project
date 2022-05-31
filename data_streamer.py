@@ -1,5 +1,6 @@
 from brainflow.board_shim import BoardShim, BrainFlowInputParams, BoardIds
 from random import randint
+from itertools import repeat
 from const import *
 
 class DataStreamer:
@@ -31,32 +32,33 @@ class DataStreamer:
             self.board.start_stream()
         except:
             print("Error connecting to board. Will stream data synthetically.")
+    
+    def standardize_length(self, signal):
+        if len(signal) > DELAY:
+            signal = signal[:DELAY]
+        elif len(signal) < DELAY:
+            percent_of_data_chunk_size = len(signal)/DELAY
+            number_of_repetitions = int((1 - percent_of_data_chunk_size)/percent_of_data_chunk_size) + 1
+            signal.extend(repeat(signal, number_of_repetitions))
+            signal = signal[:DELAY]
+        return signal
 
     # Get all the data in a certain time window. If board isn't connected, just return a string of ones
     def get_current_data(self):
-        """
-        if 1 == 1:
-            data = self.board.get_board_data(DELAY) # this gets data continiously
-            c3_data_list = [val*SCALE_FACTOR_EEG for val in data[1]]
-            c4_data_list = [val*SCALE_FACTOR_EEG for val in data[2]]
-            
-            if len(self.all_c3_data) > DATA_CHUNK_SIZE:
-                self.all_c3_data = self.all_c3_data[-1*DATA_CHUNK_SIZE:]
-            if len(self.all_c4_data) > DATA_CHUNK_SIZE:
-                self.all_c4_data = self.all_c4_data[-1*DATA_CHUNK_SIZE:]
-        else:
-            c3_data_list = [1 for _ in range(DELAY)]
-            c4_data_list = [1 for _ in range(DELAY)]
-        """
-        data = self.board.get_board_data(DELAY) # this gets data continiously
-        c3_data_list = [val*SCALE_FACTOR_EEG for val in data[1]]
-        c4_data_list = [val*SCALE_FACTOR_EEG for val in data[2]]
-            
+        data = self.board.get_board_data(DATA_CHUNK_SIZE) # this gets data continiously
+        c3_data_list = [val*SCALE_FACTOR_EEG for val in data[4]]
+        c4_data_list = [val*SCALE_FACTOR_EEG for val in data[6]]
+
+        #c3_data_list = self.standardize_length(c3_data_list)
+        #c4_data_list = self.standardize_length(c4_data_list)
+        
+        self.all_c3_data.extend(c3_data_list)
+        self.all_c4_data.extend(c4_data_list)
+
         if len(self.all_c3_data) > DATA_CHUNK_SIZE:
             self.all_c3_data = self.all_c3_data[-1*DATA_CHUNK_SIZE:]
         if len(self.all_c4_data) > DATA_CHUNK_SIZE:
             self.all_c4_data = self.all_c4_data[-1*DATA_CHUNK_SIZE:]
-        self.all_c3_data.extend(c3_data_list)
-        self.all_c4_data.extend(c4_data_list)
-        self.current_time += DELAY
+
+        self.current_time += len(c3_data_list)
         return c3_data_list, c4_data_list
