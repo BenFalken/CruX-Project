@@ -45,7 +45,7 @@ class DataStreamer:
 
     # Get all the data in a certain time window. If board isn't connected, just return a string of ones
     def get_current_data(self):
-        data = self.board.get_board_data(DATA_CHUNK_SIZE) # this gets data continiously
+        data = self.board.get_board_data(40000) # this gets data continiously
         c3_data_list = [val*SCALE_FACTOR_EEG for val in data[4]]
         c4_data_list = [val*SCALE_FACTOR_EEG for val in data[6]]
 

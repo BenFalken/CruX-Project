@@ -40,6 +40,9 @@ classifier = DataClassifier(firebase_comm=firebase_comm)
 # Keeps track of page
 namespace = '/test'
 
+# oof
+counter_of_thing = 0
+
 ## Functions that facilitate data streaming and database interaction ##
 
 # If we have enough data to chunk out and add to our database, let's do so
@@ -125,20 +128,29 @@ def process_data(c3_data=[], c4_data=[]):
 
 # Our website's bread and butter. Initializes the charts and webpage, then collects data until the page is closed
 def eeg_processor():
-    global streamer
+    global streamer, counter_of_thing
     initialize_analytics_chart()
     send_data()
-    send_data()
+
     while not thread_stop_event.isSet():
         # Collect eeg data
         if streamer.is_recording_training_data or streamer.is_streaming_testing_data:
             c3_data, c4_data = streamer.get_current_data()
+            #print(len(streamer.all_c3_data))
             c3_data = downsample_data(c3_data)
             c4_data = downsample_data(c4_data)
-            process_data(c3_data, c4_data)
+            #print(counter_of_thing)
+            if counter_of_thing%50 == 0:
+                process_data(c3_data, c4_data)
+                socketio.sleep(0.25)    # Necessary time delay
         elif namespace == '/test':
-            process_data()
-        socketio.sleep(0.25)    # Necessary time delay
+            if counter_of_thing%50 == 0:
+                process_data()
+                socketio.sleep(0.25)    # Necessary time delay
+        else:
+            if counter_of_thing%50 == 0:
+                socketio.sleep(0.25)
+        counter_of_thing += 1
     update_analytics_chart()
     print("The data stream has ended")
 
