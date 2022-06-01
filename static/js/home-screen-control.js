@@ -24,6 +24,8 @@ $(document).ready(function(){
             sparkles = [new Sparkle()];
             score = 0;
             puffy.x = .5;
+            demonic_dance.play();
+            console.log("Playing theme song \"Demonic_Dance.mp3\" by Paul Zhang");
         }
     });
 
@@ -49,6 +51,9 @@ $(document).ready(function(){
     terrain.src = "/static/images/terrain.png";
     game_over_screen = new Image();
     game_over_screen.src = "/static/images/gameover.png";
+    demonic_dance = new Audio();
+    demonic_dance.src = "/static/audio/Demonic_Dance.mp3";
+    demonic_dance.loop = true;
 
     puffy = new SmoothBrain();
     sparkles = [new Sparkle()];
@@ -236,6 +241,9 @@ function update(timestamp) {
     if (sustenance < 0) {
         game_state = "dead";
         sustenance = 0;
+        console.log("Score: " + score.toString());
+        demonic_dance.pause();
+        demonic_dance.currentTime = 0
     }
     if (game_state == "dead") {
         game_duration_seconds = 0;

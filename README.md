@@ -19,4 +19,4 @@ pip install -r requirements.txt
 
 Then contact someone on our team to obtain `firebase_key.json`, and put that directly inside the `CruX-Project` directory. You can now run the application by visiting `http://127.0.0.1:5000/` in your browser while running `flask run` from terminal.
 
-Site is also accessible at: https://safe-wave-60225.herokuapp.com
+Site is also accessible at: [https://stormy-journey-96194.herokuapp.com](https://stormy-journey-96194.herokuapp.com)
