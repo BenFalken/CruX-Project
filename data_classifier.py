@@ -1,4 +1,5 @@
 from scipy import signal
+from scipy.ndimage import gaussian_filter
 from tensorflow.keras import layers, models
 from const import *
 import numpy as np
@@ -46,13 +47,24 @@ class DataClassifier:
         high = MAX_FREQ / nyq
         b, a = signal.butter(9, [low, high], btype="band")  # Bandpass, which means we select a "band" of frequencies
         # What are a and b? what do signal.butter and signal.lfilter do?
-        filtered = signal.lfilter(b, a, data)
+        b_notch, a_notch = signal.iirnotch(30, 5, 128)
+        filtered = signal.filtfilt(b_notch, a_notch, data)
+        b_notch, a_notch = signal.iirnotch(31, 5, 128)
+        filtered = signal.filtfilt(b_notch, a_notch, data)
+        b_notch, a_notch = signal.iirnotch(32, 5, 128)
+        filtered = signal.filtfilt(b_notch, a_notch, filtered)
+        filtered = signal.lfilter(b, a, filtered)
         return filtered
 
     def preprocess_signal(self, data):
         filtered_signal = self.filter_data(data)
         f, t, signal_stft = signal.stft(filtered_signal, nperseg=196)
         signal_stft = np.abs(signal_stft)
+        mean = np.mean(signal_stft)
+        var = np.std(signal_stft)
+        outlier = mean + 2*var
+        signal_stft[signal_stft > outlier] = mean
+        signal_stft = gaussian_filter(signal_stft, sigma=1)
         return signal_stft
 
     # Add data from the database to our classifier

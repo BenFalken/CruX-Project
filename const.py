@@ -1,10 +1,10 @@
 # Constants for the stfts produced
-STFT_T_SIZE = 99
-STFT_F_SIZE = 99
+STFT_T_SIZE = 50
+STFT_F_SIZE = 50
 
 ## CONSTANTS AND STUFF ##
 WINDOW_SIZE = 100
-DATA_CHUNK_SIZE = 9600
+DATA_CHUNK_SIZE = 2400
 DELAY = 800
 
 # Cutoff frequencies
