@@ -1,4 +1,4 @@
-$(document).ready(function(){
+$(document).ready(function() {
     canvas = document.getElementById("game-canvas");
     ctx = canvas.getContext("2d");
     canvas.width = canvas.clientWidth;
