@@ -57,6 +57,7 @@ class DataClassifier:
         return filtered
 
     def preprocess_signal(self, data):
+        data = (data - np.min(data)) / (np.max(data) - np.min(data))
         filtered_signal = self.filter_data(data)
         f, t, signal_stft = signal.stft(filtered_signal, nperseg=196)
         signal_stft = np.abs(signal_stft)
