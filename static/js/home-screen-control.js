@@ -53,11 +53,14 @@ $(document).ready(function() {
     game_over_screen.src = "/static/images/gameover.png";
     demonic_dance = new Audio();
     demonic_dance.src = "/static/audio/Demonic_Dance.mp3";
+    demonic_dance.load();
     demonic_dance.loop = true;
     fwoop = new Audio();
     fwoop.src = "/static/audio/fwoop.mp3";
+    fwoop.load();
     game_over_sfx = new Audio();
     game_over_sfx.src = "/static/audio/game_over.mp3";
+    game_over_sfx.load();
 
     puffy = new SmoothBrain();
     sparkles = [new Sparkle()];
