@@ -234,3 +234,18 @@ h6 {
     margin-left: 10%;
     width: 80%;
 }
+
+#path-image {
+    background-image: url("/static/images/path.png");
+    background-size: 100%;
+    margin-left: calc(((100vw - 1130px)/2));
+    min-width: 1130px;
+    max-width: 1130px;
+    min-height: calc((280/2548)*1130px);
+}
+
+.puffy-gif {
+    margin-top: 60px;
+    margin-left: calc(565px - (((280*2632*1130px)/(2548*662*4))));
+    max-height: calc((140/2548)*1130px);
+}

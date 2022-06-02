@@ -25,8 +25,8 @@ class DataStreamer:
         try:
             BoardShim.enable_dev_board_logger()
             params = BrainFlowInputParams()
-            #params.serial_port = '/dev/cu.usbserial-4'
-            self.board = BoardShim(-1, params) #BoardShim(BoardIds.CYTON_BOARD.value, params)
+            params.serial_port = '/dev/cu.usbserial-4'
+            self.board = BoardShim(BoardIds.CYTON_BOARD.value, params)
             
             self.board.prepare_session()
             self.board.start_stream()

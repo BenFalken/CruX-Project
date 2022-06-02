@@ -88,16 +88,12 @@ def send_data(c3_data=[], c4_data=[], direction_to_move=''):
     socketio.emit('new_test_data', {
         'c3_data': c3_data,
         'c4_data': c4_data,  
-        'graph_frozen': False, 
-        'direction_to_move': direction_to_move,
-        'left_motion_file_count': streamer.left_motion_file_count, 
-        'right_motion_file_count': streamer.right_motion_file_count, 
+        'direction_to_move': direction_to_move, 
         'window_size': WINDOW_SIZE}, namespace='/test')
     socketio.emit('new_train_data', {
         'c3_data': c3_data,
         'c4_data': c4_data,  
         'graph_frozen': False, 
-        'direction_to_move': direction_to_move,
         'left_motion_file_count': streamer.left_motion_file_count, 
         'right_motion_file_count': streamer.right_motion_file_count, 
         'window_size': WINDOW_SIZE}, namespace='/training')

@@ -141,6 +141,8 @@ function start_recording_left_motion() {
     if (color != 'skyblue') {
         $("#record-left-motion-button").css("background-color", 'skyblue');
     }
+    $("#move-gif").css("visibility", "visible");
+    $("#move-gif").attr("src", "/static/images/moving_puffy_left.gif");
     $.getJSON('/start_recording_left_motion',
         function(data) {
     });
@@ -153,6 +155,8 @@ function start_recording_right_motion() {
     if (color != 'skyblue') {
         $("#record-right-motion-button").css("background-color", 'skyblue');
     }
+    $("#move-gif").css("visibility", "visible");
+    $("#move-gif").attr("src", "/static/images/moving_puffy_right.gif");
     $.getJSON('/start_recording_right_motion',
         function(data) {
     });
@@ -172,6 +176,7 @@ function stop_recording() {
     graph_is_ready = false;
     $("#record-left-motion-button").css("background-color", '#ea4c89');
     $("#record-right-motion-button").css("background-color", '#ea4c89');
+    $("#move-gif").css("visibility", "hidden");
     $.getJSON('/stop_recording',
         function(data) {
     });

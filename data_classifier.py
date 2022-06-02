@@ -59,7 +59,7 @@ class DataClassifier:
     def preprocess_signal(self, data):
         data = (data - np.min(data)) / (np.max(data) - np.min(data))
         filtered_signal = self.filter_data(data)
-        f, t, signal_stft = signal.stft(filtered_signal, nperseg=196)
+        f, t, signal_stft = signal.stft(filtered_signal, nperseg=98)
         signal_stft = np.abs(signal_stft)
         mean = np.mean(signal_stft)
         var = np.std(signal_stft)
@@ -79,9 +79,11 @@ class DataClassifier:
             c3_signal_stft = self.preprocess_signal(c3_signal)
             c4_signal_stft = self.preprocess_signal(c4_signal)
 
+            print(c3_signal_stft.shape)
+
             for i in range(STFT_F_SIZE):
                 for j in range(STFT_T_SIZE):
-                    self.all_data[self.random_indices[self.count]][i][j][0] = (c3_signal_stft[i][j]/c4_signal_stft[i][j])
+                    self.all_data[self.random_indices[self.count]][i][j][0] = c3_signal_stft[i][j] #(c3_signal_stft[i][j]/c4_signal_stft[i][j])
             self.all_labels[self.random_indices[self.count]] = label
 
             self.count += 1
@@ -150,7 +152,7 @@ class DataClassifier:
         for i in range(STFT_F_SIZE):
             for j in range(STFT_T_SIZE):
                 converted_input[0][i][j][0] *= c3_data_stft[i][j]
-                converted_input[0][i][j][0] /= c4_data_stft[i][j]
+                #converted_input[0][i][j][0] /= c4_data_stft[i][j]
         return converted_input
 
     # Classifies the signal streamed in from the headset

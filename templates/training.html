@@ -34,6 +34,13 @@
               $('#footer').load('footer');
           });
         </script>
+
+        <script>
+          $( '#record-right-motion-button' ).click( function() {
+            $("#move-gif").attr("src", "/static/images/moving_puffy_right.gif");
+        });
+        </script>
+
         <!-- Code responsible for facilitating threading -->
         <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/1.3.6/socket.io.min.js"></script>
         <script src="static/js/training-control.js"></script>
@@ -83,6 +90,10 @@
               </div>
             </div>
           </div>
+        </div>
+
+        <div id="path-image">
+          <img id="move-gif" class="puffy-gif" src="">
         </div>
         
         <!-- Buttons to dictate which data is collected, and for how long-->
