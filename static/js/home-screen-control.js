@@ -54,6 +54,10 @@ $(document).ready(function() {
     demonic_dance = new Audio();
     demonic_dance.src = "/static/audio/Demonic_Dance.mp3";
     demonic_dance.loop = true;
+    fwoop = new Audio();
+    fwoop.src = "/static/audio/fwoop.mp3";
+    game_over_sfx = new Audio();
+    game_over_sfx.src = "/static/audio/game_over.mp3";
 
     puffy = new SmoothBrain();
     sparkles = [new Sparkle()];
@@ -113,7 +117,12 @@ class Sparkle {
             this.x += (puffy.x - this.x) * .2;
             this.y += (puffy.y - this.y) * .2;
         }
-        return distance_to_puffy <= .03;
+        var is_touching_puffy = distance_to_puffy <= .03;
+        if (is_touching_puffy) {
+            fwoop.currentTime = 0;
+            fwoop.play();
+        }
+        return is_touching_puffy;
     }
     draw(timestamp) {
         // smoothbrain.gif has sixteen frames that each last for 70 milliseconds
@@ -244,6 +253,7 @@ function update(timestamp) {
         console.log("Score: " + score.toString());
         demonic_dance.pause();
         demonic_dance.currentTime = 0
+        game_over_sfx.play();
     }
     if (game_state == "dead") {
         game_duration_seconds = 0;

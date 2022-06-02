@@ -60,11 +60,13 @@
         <canvas id="game-canvas" onkeyup="keyup" onkeydown="keydown"></canvas>
 
         <p id="instructions">
-            <strong>Instructions:</strong> We should probably put some kind of instructions here about how to use the website, like how much data to collect before hitting the "make puffy move" button, which electrodes to use, etc.
+            <strong>No EEG required to play!</strong> Just press the left & right arrow keys to move Puffy left & right. Collect as much sparkle dust as you can before your time runs out!
         </p>
 
-        <button id="stream-button" class="button-1 center" onclick="start_playing()">Make Puffy Move!</button>
-        <button class="button-1 center" onclick="stop_playing()">Stop Moving Puffy</button>
+        <button id="stream-button" class="button-1 center" onclick="start_playing()">Start Reading Brain Signals</button>
+        <button class="button-1 center" onclick="stop_playing()">Stop Reading Brain Signals</button>
+        
+        <p id="description"><br>Puffy is cute but hardy koala brain, whom you must guide left and right to collect life-sustaining sparkle dust. You can play using either arrow keys or using an OpenBCI headset.<br></p>
 
         <p id="credits">
             <br><strong>Credits:</strong>

@@ -189,24 +189,8 @@ h6 {
     cursor: pointer;
 }
 
-#avatar {
-    position: absolute;
-    top: calc(90vw * 1080 / 1920);
-    left: 45%;
-    width: 10vw;
-    height: 10vw;
-    z-index: 100;
-}
-
 #training-ground {
     margin-top: 50%;
-}
-
-#sparkle {
-    position: absolute;
-    top: 30%;
-    left: 40%;
-    max-height: 100px;
 }
 
 #network-modal #modal-img {
@@ -226,9 +210,18 @@ h6 {
     width: 80%;
 }
 
+#description {
+    font-family: 'Nunito', sans-serif;
+    font-size: 1.5vw;
+    text-align: left;
+    color:rgb(80, 80, 80);
+    margin-left: 10%;
+    width: 80%;
+}
+
 #credits {
     font-family: 'Nunito', sans-serif;
-    font-size: 1vw;
+    font-size: 1.5vw;
     text-align: center;
     color:rgb(80, 80, 80);
     margin-left: 10%;
