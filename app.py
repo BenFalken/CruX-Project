@@ -40,9 +40,6 @@ classifier = DataClassifier(firebase_comm=firebase_comm)
 # Keeps track of page
 namespace = '/test'
 
-# oof
-counter_of_thing = 0
-
 ## Functions that facilitate data streaming and database interaction ##
 
 # If we have enough data to chunk out and add to our database, let's do so
@@ -139,18 +136,10 @@ def eeg_processor():
             #print(len(streamer.all_c3_data))
             c3_data = downsample_data(c3_data)
             c4_data = downsample_data(c4_data)
-            #print(counter_of_thing)
-            if counter_of_thing%50 == 0:
-                process_data(c3_data, c4_data)
-                socketio.sleep(0.25)    # Necessary time delay
+            process_data(c3_data, c4_data)
         elif namespace == '/test':
-            if counter_of_thing%50 == 0:
-                process_data()
-                socketio.sleep(0.25)    # Necessary time delay
-        else:
-            if counter_of_thing%50 == 0:
-                socketio.sleep(0.25)
-        counter_of_thing += 1
+            process_data()
+        socketio.sleep(0.25)
     update_analytics_chart()
     print("The data stream has ended")
 

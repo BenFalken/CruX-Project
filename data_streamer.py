@@ -25,12 +25,13 @@ class DataStreamer:
         try:
             BoardShim.enable_dev_board_logger()
             params = BrainFlowInputParams()
-            params.serial_port = '/dev/cu.usbserial-4'
-            self.board = BoardShim(BoardIds.CYTON_BOARD.value, params) # added cyton board id here
+            #params.serial_port = '/dev/cu.usbserial-4'
+            self.board = BoardShim(-1, params) #BoardShim(BoardIds.CYTON_BOARD.value, params)
             
             self.board.prepare_session()
             self.board.start_stream()
-        except:
+        except Exception as e:
+            print(e)
             print("Error connecting to board. Will stream data synthetically.")
     
     def standardize_length(self, signal):
@@ -45,7 +46,7 @@ class DataStreamer:
 
     # Get all the data in a certain time window. If board isn't connected, just return a string of ones
     def get_current_data(self):
-        data = self.board.get_board_data(40000) # this gets data continiously
+        data = self.board.get_board_data(DATA_CHUNK_SIZE) # this gets data continiously
         c3_data_list = [val*SCALE_FACTOR_EEG for val in data[4]]
         c4_data_list = [val*SCALE_FACTOR_EEG for val in data[6]]
 
