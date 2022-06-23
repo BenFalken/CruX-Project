@@ -19,9 +19,10 @@ pip install -r requirements.txt
 
 Then contact someone on our team to obtain `firebase_key.json`, and put that directly inside the `CruX-Project` directory. You can now run the application by visiting `http://127.0.0.1:5000/` in your browser while running `flask run` from terminal.
 
-Site is also accessible at: [https://stormy-journey-96194.herokuapp.com](https://stormy-journey-96194.herokuapp.com)
+Site is also accessible at: [https://arasi-site.herokuapp.com](https://arasi-site.herokuapp.com)
 
 ## Known bugs
 * OpenBCI headset often buffers and fails to connect, likely a hardware issue
 * "fwoop" sound effect in game cannot be played multiple times in Safari (but it does work in Chrome)
 * The game assumes the update loop is called at 60Hz. If you with a 120Hz frame rate, everything moves twice as fast
+* Releasing an arrow key makes puffy stop moving even if the other arrow key is being pressed
